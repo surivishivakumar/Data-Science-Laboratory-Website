@@ -1,0 +1,17 @@
+[
+    {
+        "Name":"shiva",
+        "Roll_no":120,
+        "Dept":"DS"
+    },
+    {
+        "Name":"Jai simha",
+        "Roll_no":110,
+        "Dept":"AIML"
+    },
+    {
+        "Name":"harsha",
+        "Roll_no":74,
+        "Dept":"CSE"
+    }
+]

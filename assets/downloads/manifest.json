@@ -1,0 +1,37 @@
+[
+  {
+    "file": "StudentOutputs.csv",
+    "usedBy": "exp1-a",
+    "what": "Student table written by to_csv(), then read back"
+  },
+  {
+    "file": "Student.json",
+    "usedBy": "exp1-b",
+    "what": "Student table written by to_json(orient='records')"
+  },
+  {
+    "file": "Student.xlsx",
+    "usedBy": "exp1-c",
+    "what": "Student table written by to_excel()"
+  },
+  {
+    "file": "Engineer.db",
+    "usedBy": "exp2-b",
+    "what": "SQLite database, table Engineers"
+  },
+  {
+    "file": "ds_experiment2b.db",
+    "usedBy": "exp2-b",
+    "what": "SQLite database, table Engineers (earlier run)"
+  },
+  {
+    "file": "StudentsOutputs.csv",
+    "usedBy": "exp1-a",
+    "what": "An earlier run of the same CSV export"
+  },
+  {
+    "file": "iris.csv",
+    "usedBy": "exp5-a",
+    "what": "Fisher's Iris measurements, used by experiment 5A"
+  }
+]

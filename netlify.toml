@@ -1,0 +1,37 @@
+# Netlify configuration for the Data Science Laboratory site.
+#
+# This is a plain static site - there is nothing to compile, no npm install and
+# no bundler. Netlify's drag-and-drop can otherwise try to auto-detect a
+# framework and run a build step, which would fail or mangle the output.
+# Declaring an empty command and publishing the folder root keeps it verbatim.
+
+[build]
+  publish = "."
+  command = ""
+
+# Nothing here is secret, so there is no environment file. Listed explicitly so
+# it is obvious that a public deploy exposes no credentials.
+[build.environment]
+  NODE_VERSION = "22"
+
+# Long cache for the media, which never changes once uploaded.
+[[headers]]
+  for = "/assets/videos/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/assets/downloads/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+    Content-Disposition = "attachment"
+
+[[headers]]
+  for = "/assets/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
