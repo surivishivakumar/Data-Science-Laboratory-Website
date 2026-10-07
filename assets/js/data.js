@@ -1,5 +1,5 @@
 /*==========================================================================
-  DATA SCIENCE LABORATORY
+  DIGITAL LABORATORY
   ----------------------------------------------------------------------
   THIS IS THE ONLY FILE YOU NEED TO EDIT FOR CONTENT.
   Every piece of text, link, video and code shown on the website is
@@ -22,13 +22,13 @@
    1. LABORATORY BRANDING
    ------------------------------------------------------------------------- */
 var laboratory = {
-  name: "Data Science Laboratory",
+  name: "Digital Laboratory",
   tagline: "Digital Laboratory",
   address: "SREE SAINATH NAGAR, A. RANGAMPETA, TIRUPATI - 517102"
 };
 
 var labMeta = {
-  subjectCode: "22DS102006",   // Data Science Laboratory
+  subjectCode: "22DS102006",   // Digital Laboratory
   academicYear: "2025 - 2026",
   department: "Department of Computer Science & Engineering",
   copyrightYear: "2026",

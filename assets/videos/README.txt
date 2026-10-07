@@ -1,6 +1,6 @@
 ================================================================================
   SCREEN RECORDINGS - EXACT FILENAMES REQUIRED
-  Data Science Laboratory
+  Digital Laboratory
 ================================================================================
 
 Drop your .mp4 files into THIS folder using the filenames listed below.

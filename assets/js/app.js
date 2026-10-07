@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Data Science Laboratory
+   Digital Laboratory
    All rendering and interaction logic.
    Every value shown here is read from assets/js/data.js.
    ========================================================================== */
@@ -72,6 +72,7 @@
     soundOff: '<svg class="off" viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Zm17.3 1.3-1.4-1.4-2.3 2.3-2.3-2.3-1.4 1.4 2.3 2.3-2.3 2.3 1.4 1.4 2.3-2.3 2.3 2.3 1.4-1.4-2.3-2.3 2.3-2.3Z"/></svg>',
     video: '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2.5" y="5.5" width="13" height="13" rx="2.5"/><path d="m16 10.5 5.5-3.2v9.4L16 13.5v-3Z"/></svg>',
     person: '<svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.4-3.8 4-5.7 7.5-5.7s6.1 1.9 7.5 5.7"/></svg>',
+    pencil: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
     copy: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 5.5A2.5 2.5 0 0 0 12.5 3H6.5A3.5 3.5 0 0 0 3 6.5v6A2.5 2.5 0 0 0 5.5 15"/></svg>',
     check: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4.5 4.5L19 7"/></svg>',
     download: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>',
@@ -130,6 +131,263 @@
   }
 
   /* ---------------------------------------------------------------------
+     1b. STUDENT CARD EDITOR  (edit form + localStorage persistence)
+     --------------------------------------------------------------------- */
+  const CARD_STORE_KEY = "dslab.student-card.v1";
+  const CARD_DEFAULTS = {
+    student: JSON.parse(JSON.stringify(student)),
+    labMeta: {
+      subjectCode: labMeta.subjectCode,
+      academicYear: labMeta.academicYear,
+      department: labMeta.department
+    }
+  };
+
+  /* Every editable field of the card, in form order. `group` says which
+     data.js object owns the value; `req` / `min` / `max` / `rx` drive
+     validation. These are the only keys that are ever written to storage. */
+  const CARD_FIELDS = [
+    { key: "name", label: "Student Name", group: "student", req: true, min: 2, max: 80 },
+    { key: "idNumber", label: "Student ID / Roll Number", group: "student", req: true, max: 32,
+      rx: /^[A-Za-z0-9][A-Za-z0-9\-/. ]*$/, rxMsg: "Use letters, numbers and - / . only." },
+    { key: "section", label: "Section", group: "student", req: true, max: 40 },
+    { key: "department", label: "Branch / Course", group: "labMeta", req: true, max: 100 },
+    { key: "subjectCode", label: "Subject Code", group: "labMeta", req: true, max: 40,
+      rx: /^[A-Za-z0-9][A-Za-z0-9\-/. ]*$/, rxMsg: "Use letters, numbers and - / . only." },
+    { key: "academicYear", label: "Academic Year", group: "labMeta", req: true, max: 30,
+      rx: /^\d{4}\s*[-\u2013\u2014/]\s*\d{2,4}$/, rxMsg: "Use a range like 2025 - 2026." },
+    { key: "faculty", label: "Faculty", group: "student", req: true, max: 80 },
+    { key: "profession", label: "Profession", group: "student", req: true, max: 80 },
+    { key: "photo", label: "Photo path / URL", group: "student", req: false, max: 300,
+      rx: /^(?:https?:\/\/|assets\/|\.?\.?\/)[^\s]+\.(?:png|jpe?g|webp|gif|avif)$/i,
+      rxMsg: "Use an image path or URL ending in .jpg, .png, .webp or .gif.",
+      hint: "Optional. Leave empty for the initials placeholder, for example assets/img/student-photo.jpg" }
+  ];
+
+  /* ---- storage ---- */
+  function readCardStore() {
+    try {
+      const raw = localStorage.getItem(CARD_STORE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      return data && typeof data === "object" ? data : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function applyCardData(data) {
+    if (!data) return;
+    CARD_FIELDS.forEach(function (f) {
+      const src = f.group === "student" ? data.student : data.labMeta;
+      if (src && typeof src[f.key] === "string") {
+        if (f.group === "student") student[f.key] = src[f.key];
+        else labMeta[f.key] = src[f.key];
+      }
+    });
+  }
+
+  function restoreStudentCard() {
+    applyCardData(readCardStore());
+  }
+
+  function writeCardStore() {
+    const data = { v: 1, student: {}, labMeta: {} };
+    CARD_FIELDS.forEach(function (f) {
+      if (f.group === "student") data.student[f.key] = student[f.key];
+      else data.labMeta[f.key] = labMeta[f.key];
+    });
+    try {
+      localStorage.setItem(CARD_STORE_KEY, JSON.stringify(data));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function clearCardStore() {
+    try { localStorage.removeItem(CARD_STORE_KEY); } catch (e) { /* ignore */ }
+  }
+
+  /* ---- re-render only what the model change affects ---- */
+  function refreshStudentCardUI() {
+    const card = document.getElementById("studentCard");
+    if (card) {
+      const holder = document.createElement("div");
+      holder.innerHTML = studentCardHtml();
+      const fresh = holder.firstElementChild;
+      if (fresh && card.parentNode) card.parentNode.replaceChild(fresh, card);
+    }
+    const codeNode = $(".univ-card__code b");
+    if (codeNode) codeNode.textContent = labMeta.subjectCode;
+    paintBranding();
+  }
+
+  /* ---- modal ---- */
+  let cardModal = null;
+  let cardModalTrigger = null;
+
+  function cardFieldHtml(f) {
+    const id = "cf-" + f.key;
+    return (
+      '<div class="fld">' +
+        '<label class="fld__label" for="' + id + '">' + esc(f.label) +
+          (f.req ? ' <span class="fld__req" aria-hidden="true">*</span>' : "") +
+        "</label>" +
+        '<input class="fld__input" id="' + id + '" name="' + f.key + '" type="text"' +
+          ' maxlength="' + f.max + '" autocomplete="off" spellcheck="false"' +
+          ' aria-describedby="' + id + '-err">' +
+        (f.hint ? '<p class="fld__hint">' + esc(f.hint) + "</p>" : "") +
+        '<p class="fld__err" id="' + id + '-err" role="alert"></p>' +
+      "</div>"
+    );
+  }
+
+  function ensureCardModal() {
+    if (cardModal) return cardModal;
+    const wrap = document.createElement("div");
+    wrap.className = "cm";
+    wrap.id = "cardModal";
+    wrap.hidden = true;
+    wrap.innerHTML =
+      '<div class="cm__backdrop" data-cm-close></div>' +
+      '<div class="cm__panel" role="dialog" aria-modal="true" aria-labelledby="cmTitle">' +
+        '<div class="cm__head">' +
+          "<div>" +
+            '<h3 class="cm__title" id="cmTitle">Edit Student Card</h3>' +
+            '<p class="cm__sub">Saved in this browser, so the changes stay after you close the site.</p>' +
+          "</div>" +
+          '<button class="cm__x" type="button" aria-label="Close" data-cm-close>' + ICON.close + "</button>" +
+        "</div>" +
+        '<form class="cm__form" id="cardEditForm" novalidate>' +
+          '<div class="cm__grid">' + CARD_FIELDS.map(cardFieldHtml).join("") + "</div>" +
+          '<div class="cm__actions">' +
+            '<button class="btn btn--sm btn--ghost cm__reset" id="cardResetBtn" type="button">Reset / Restore Default</button>' +
+            '<span class="cm__gap"></span>' +
+            '<button class="btn btn--sm" type="button" data-cm-close>Cancel</button>' +
+            '<button class="btn btn--sm btn--primary" type="submit">Save</button>' +
+          "</div>" +
+        "</form>" +
+      "</div>";
+    document.body.appendChild(wrap);
+    cardModal = wrap;
+
+    wrap.addEventListener("click", function (event) {
+      if (event.target.closest("[data-cm-close]")) closeCardEditor();
+    });
+    $("#cardEditForm", wrap).addEventListener("submit", function (event) {
+      event.preventDefault();
+      saveCardEditor();
+    });
+    $("#cardResetBtn", wrap).addEventListener("click", resetStudentCard);
+    wrap.addEventListener("input", function (event) {
+      if (event.target.classList && event.target.classList.contains("fld__input")) {
+        clearFieldError(event.target);
+      }
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && cardModal && !cardModal.hidden) closeCardEditor();
+    });
+    return wrap;
+  }
+
+  function fillCardForm() {
+    CARD_FIELDS.forEach(function (f) {
+      const input = $("#cf-" + f.key, cardModal);
+      if (!input) return;
+      input.value = String((f.group === "student" ? student[f.key] : labMeta[f.key]) || "");
+      clearFieldError(input);
+    });
+  }
+
+  function showFieldError(input, message) {
+    input.classList.add("is-invalid");
+    input.setAttribute("aria-invalid", "true");
+    const err = document.getElementById(input.id + "-err");
+    if (err) err.textContent = message;
+  }
+
+  function clearFieldError(input) {
+    input.classList.remove("is-invalid");
+    input.removeAttribute("aria-invalid");
+    const err = document.getElementById(input.id + "-err");
+    if (err) err.textContent = "";
+  }
+
+  function fieldError(f, raw) {
+    const value = String(raw == null ? "" : raw).trim();
+    if (f.req && !value) return f.label + " is required.";
+    if (!value) return "";
+    if (f.min && value.length < f.min) return f.label + " must be at least " + f.min + " characters.";
+    if (f.max && value.length > f.max) return f.label + " must be " + f.max + " characters or fewer.";
+    if (f.rx && !f.rx.test(value)) return f.rxMsg || (f.label + " is not valid.");
+    return "";
+  }
+
+  function saveCardEditor() {
+    const values = {};
+    let firstBad = null;
+    CARD_FIELDS.forEach(function (f) {
+      const input = $("#cf-" + f.key, cardModal);
+      if (!input) return;
+      const value = input.value.trim();
+      const message = fieldError(f, value);
+      if (message) {
+        showFieldError(input, message);
+        if (!firstBad) firstBad = input;
+      } else {
+        clearFieldError(input);
+      }
+      values[f.key] = value;
+    });
+    if (firstBad) {
+      firstBad.focus();
+      firstBad.scrollIntoView({ block: "nearest" });
+      return;
+    }
+
+    CARD_FIELDS.forEach(function (f) {
+      if (f.group === "student") student[f.key] = values[f.key];
+      else labMeta[f.key] = values[f.key];
+    });
+    const stored = writeCardStore();
+    refreshStudentCardUI();
+    closeCardEditor();
+    toast(stored ? "Student card updated" : "Card updated - browser storage is unavailable, changes last for this session only");
+  }
+
+  function resetStudentCard() {
+    CARD_FIELDS.forEach(function (f) {
+      if (f.group === "student") student[f.key] = CARD_DEFAULTS.student[f.key];
+      else labMeta[f.key] = CARD_DEFAULTS.labMeta[f.key];
+    });
+    clearCardStore();
+    fillCardForm();
+    refreshStudentCardUI();
+    toast("Student card restored to the default details");
+  }
+
+  function openCardEditor(trigger) {
+    ensureCardModal();
+    cardModalTrigger = trigger || document.activeElement;
+    fillCardForm();
+    cardModal.hidden = false;
+    document.body.classList.add("cm-open");
+    const first = $("#cf-name", cardModal);
+    if (first) first.focus();
+  }
+
+  function closeCardEditor() {
+    if (!cardModal || cardModal.hidden) return;
+    cardModal.hidden = true;
+    document.body.classList.remove("cm-open");
+    const fresh = document.getElementById("editCardBtn");
+    if (fresh) fresh.focus();
+    else if (cardModalTrigger && document.contains(cardModalTrigger)) cardModalTrigger.focus();
+    cardModalTrigger = null;
+  }
+
+  /* ---------------------------------------------------------------------
      2. SHARED PARTIALS
      --------------------------------------------------------------------- */
   function studentFieldsHtml() {
@@ -137,6 +395,7 @@
       ["Name:", student.name],
       ["ID Number:", student.idNumber],
       ["Section:", student.section],
+      ["Branch:", labMeta.department],
       ["Faculty:", student.faculty],
       ["Profession:", student.profession]
     ];
@@ -176,6 +435,11 @@
             }).join("") +
           "</span>" +
           "<span>" + esc(labMeta.academicYear) + "</span>" +
+        "</div>" +
+        '<div class="idcard__actions">' +
+          '<button class="btn btn--sm btn--ghost idcard__edit" id="editCardBtn" type="button">' +
+            ICON.pencil + "<span>Edit Student Card</span>" +
+          "</button>" +
         "</div>" +
       "</aside>"
     );
@@ -618,7 +882,7 @@
 
   const LAB_SAMPLES = {
     starter: [
-      "# Data Science Laboratory - Python 3.12",
+      "# Digital Laboratory - Python 3.12",
       "# Press Run (or Ctrl+Enter). Output appears below, plots on the right.",
       "",
       "import pandas as pd",
@@ -1590,7 +1854,7 @@
           "# " + section.title + "\n" +
           "# " + labMeta.subjectCode + "  " + labMeta.academicYear + "\n" +
           "#\n" +
-          "# Source as shown on the Data Science Laboratory site.\n\n";
+          "# Source as shown on the Digital Laboratory site.\n\n";
         const blob = new Blob([header + String(section.code || "")], { type: "text/x-python;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -1817,6 +2081,12 @@
      8. BOOT
      --------------------------------------------------------------------- */
   document.addEventListener("click", function (event) {
+    const editBtn = event.target.closest("#editCardBtn");
+    if (editBtn) {
+      event.preventDefault();
+      openCardEditor(editBtn);
+      return;
+    }
     const link = event.target.closest("a[data-link]");
     if (!link) return;
     const href = link.getAttribute("href");
@@ -1839,6 +2109,7 @@
   window.addEventListener("resize", syncTopbarHeight);
   window.addEventListener("load", syncTopbarHeight);
 
+  restoreStudentCard();
   paintBranding();
   initTheme();
   render();

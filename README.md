@@ -1,4 +1,4 @@
-# Data Science Laboratory
+# Digital Laboratory
 
 A fully interactive laboratory website. Open **`index.html`** by double-clicking it.
 No server, no install, no build step.
@@ -36,10 +36,10 @@ save, refresh the browser. That is the whole workflow.
 ### 2.1 Branding and subject code
 
 ```js
-var laboratory = { name: "Data Science Laboratory" };
+var laboratory = { name: "Digital Laboratory" };
 
 var labMeta = {
-  subjectCode: "22DS102006",           // Data Science Laboratory
+  subjectCode: "22DS102006",           // Digital Laboratory
   academicYear: "2025 - 2026",
   department: "Department of Computer Science & Engineering"
 };

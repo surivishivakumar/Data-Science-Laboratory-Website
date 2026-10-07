@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Data Science Laboratory
+   Digital Laboratory
    Design system: tokens -> base -> components -> pages -> responsive
    ========================================================================== */
 
@@ -678,6 +678,112 @@ button, input { font: inherit; color: inherit; }
 }
 .idcard__social .social-btn > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .idcard__social .social-btn em { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---- Student card editing ---- */
+.idcard__actions {
+  display: flex; justify-content: center;
+  padding: 13px 14px;
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+}
+.idcard__edit {
+  width: 100%;
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.idcard__edit:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+
+/* Edit Student Card dialog */
+.cm {
+  position: fixed; inset: 0;
+  z-index: 85;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.cm[hidden] { display: none; }
+.cm__backdrop {
+  position: absolute; inset: 0;
+  background: rgba(4, 8, 18, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.cm__panel {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: min(86vh, 780px);
+  display: flex; flex-direction: column;
+  background: var(--surface-solid);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.cm__head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+  padding: 17px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 10%, transparent), color-mix(in srgb, var(--accent-3) 8%, transparent));
+}
+.cm__title { margin: 0; font-size: 17px; }
+.cm__sub { margin: 5px 0 0; font-size: 12.5px; color: var(--text-muted); }
+.cm__x {
+  flex: none;
+  display: grid; place-items: center;
+  width: 34px; height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.cm__x:hover { color: var(--text); border-color: var(--border-strong); }
+.cm__form { display: flex; flex-direction: column; min-height: 0; }
+.cm__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+  gap: 13px 14px;
+  padding: 18px 20px;
+  overflow-y: auto;
+}
+.fld { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fld__label { font-size: 12.5px; font-weight: 650; color: var(--text-muted); }
+.fld__req { color: var(--accent); }
+.fld__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit; font-size: 14px;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.fld__input:focus { outline: none; border-color: var(--accent); background: var(--surface-2); }
+.fld__input.is-invalid { border-color: #f87171; }
+.fld__hint { margin: 0; font-size: 11.5px; color: var(--text-dim); line-height: 1.45; }
+.fld__err { margin: 0; font-size: 11.5px; color: #f87171; line-height: 1.45; }
+.fld__err:empty { display: none; }
+.cm__actions {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.cm__gap { flex: 1; }
+.cm__reset { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+.cm__reset:hover { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, transparent); }
+body.cm-open { overflow: hidden; }
+
+@media (max-width: 560px) {
+  .cm { padding: 12px; align-items: flex-end; }
+  .cm__panel { width: 100%; max-height: 92vh; border-radius: var(--r-lg) var(--r-lg) 0 0; }
+  .cm__head { padding: 15px 16px 12px; }
+  .cm__grid { grid-template-columns: 1fr; padding: 16px; }
+  .cm__actions { padding: 12px 16px; }
+  .cm__gap { display: none; }
+  .cm__reset { flex: 1 1 100%; }
+  .cm__actions .btn:not(.cm__reset) { flex: 1 1 auto; }
+}
 
 /* --------------------------------------------------------------------------
    7. EXPERIMENTS SECTION

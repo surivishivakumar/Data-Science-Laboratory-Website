@@ -1,4 +1,4 @@
-# Netlify configuration for the Data Science Laboratory site.
+# Netlify configuration for the Digital Laboratory site.
 #
 # This is a plain static site - there is nothing to compile, no npm install and
 # no bundler. Netlify's drag-and-drop can otherwise try to auto-detect a
