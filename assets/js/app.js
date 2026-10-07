@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Data Science Laboratory - Mohan Babu University
+   Data Science Laboratory
    All rendering and interaction logic.
    Every value shown here is read from assets/js/data.js.
    ========================================================================== */
@@ -161,8 +161,7 @@
     return (
       '<aside class="card idcard" id="studentCard">' +
         '<div class="idcard__strip">' +
-          '<img src="' + esc(university.logo) + '" alt="">' +
-          '<span class="idcard__strip-txt"><b>' + esc(university.name) + "</b><span>" + esc(laboratory.name) + "</span></span>" +
+          '<span class="idcard__strip-txt"><b>' + esc(laboratory.name) + "</b></span>" +
         "</div>" +
         '<div class="idcard__body">' +
           photo +
@@ -170,7 +169,7 @@
         "</div>" +
         (social ? '<div class="idcard__social">' + social + "</div>" : "") +
         '<div class="idcard__foot">' +
-          "<span>MBU / " + esc(labMeta.subjectCode) + "</span>" +
+          "<span>" + esc(labMeta.subjectCode) + "</span>" +
           '<span class="idcard__bars" aria-hidden="true">' +
             [10, 16, 8, 18, 12, 20, 9, 15, 11, 19, 7, 14].map(function (h) {
               return "<i style=\"height:" + h + "px\"></i>";
@@ -1051,14 +1050,6 @@
 
         '<section class="lab-hero" id="dashboardTop">' +
           '<div class="card univ-card">' +
-            '<div class="univ-card__head">' +
-              '<img class="univ-card__logo" src="' + esc(university.logo) + '" alt="' + esc(university.name) + ' logo">' +
-              "<div>" +
-                "<h1 class=\"univ-card__title\">" + esc(university.name) + "</h1>" +
-                '<p class="univ-card__code" style="margin:6px 0 0">Est. 1994 &middot; ' + esc(labMeta.department) + "</p>" +
-              "</div>" +
-            "</div>" +
-            '<div class="univ-card__rule"></div>' +
             '<h2 class="univ-card__lab">' + esc(laboratory.name) + "</h2>" +
             '<p class="univ-card__code">Subject Code: <b>' + esc(labMeta.subjectCode) + "</b></p>" +
             '<p class="univ-card__addr">' + esc(laboratory.address) + "</p>" +
@@ -1630,7 +1621,7 @@
   function render() {
     const route = parseRoute();
     const scrollY = window.scrollY;
-    let pageTitle = laboratory.name + " - " + university.name;
+    let pageTitle = laboratory.name;
 
     switch (route.name) {
       case "home":
@@ -1758,14 +1749,8 @@
       }
       if (value != null) node.textContent = value;
     });
-    $$("img[src]").forEach(function (img) {
-      const src = img.getAttribute("src");
-      if (/assets\/img\/mbu-logo(-with-tagline)?\.png/.test(src) || src === "assets/img/mbu-logo.svg") {
-      img.setAttribute("src", university.logo);
-    }
-    });
-    if (document.title.indexOf(university.name) === -1) {
-      document.title = laboratory.name + " - " + university.name;
+    if (!document.title) {
+      document.title = laboratory.name;
     }
     paintSocial();
   }

@@ -1,4 +1,4 @@
-# Data Science Laboratory — Mohan Babu University
+# Data Science Laboratory
 
 A fully interactive laboratory website. Open **`index.html`** by double-clicking it.
 No server, no install, no build step.
@@ -20,9 +20,6 @@ DS-Lab-Website/
     │   ├── codelab.js          ← the Code Lab (editor, files, notebook, engines)
     │   └── app.js              ← search, routing, video hover, code viewer, page rendering
     ├── img/
-    │   ├── mbu-logo-with-tagline.png  ← official MBU logo + tagline lock-up (in use)
-    │   ├── mbu-logo.png              ← official MBU logo, high resolution
-    │   ├── mbu-logo.svg              ← old placeholder, no longer referenced
     │   └── monthly-sales-expenses.png
     └── videos/
         ├── README.txt          ← exact filenames for your screen recordings
@@ -39,13 +36,6 @@ save, refresh the browser. That is the whole workflow.
 ### 2.1 Branding and subject code
 
 ```js
-var university = {
-  name: "Mohan Babu University",
-  logo: "assets/img/mbu-logo-with-tagline.png",  // logo + tagline lock-up
-  logoPlain: "assets/img/mbu-logo.png",           // high-resolution logo alone
-  website: "https://www.mbu.asia/"
-};
-
 var laboratory = { name: "Data Science Laboratory" };
 
 var labMeta = {
@@ -57,19 +47,6 @@ var labMeta = {
 
 > Use `var` (not `const`/`let`) for these top-level blocks. The page fills in the
 > visible text by reading them from `window`, which only works for `var`.
-
-#### The logo is already installed
-
-The official MBU logo is in place — `mbu-logo-with-tagline.png` in the top bar
-and `mbu-logo.png` (the high-resolution mark without the tagline) on page 1.
-
-The tagline lock-up is only **174 × 100 px**, so the CSS deliberately caps its
-displayed width at the native size instead of stretching it. That keeps it sharp
-rather than blurry. If you swap in a larger logo, raise the `max-width` in
-`.topbar__logo` to match, or the tagline will be stretched.
-
-The logo appears automatically in the top bar, the university box on page 1,
-the ID card strip, and the footer.
 
 ### 2.2 Student details (the ID card on the right of page 1)
 
@@ -411,7 +388,6 @@ Change those five values and the whole site re-themes.
 |---|---|
 | Change my name / roll number | edit `student` in `assets/js/data.js` |
 | Add my photo | save as `assets/img/student-photo.jpg`, set `student.photo` |
-| Use the real MBU logo | already installed — `mbu-logo-with-tagline.png` (top bar) and `mbu-logo.png` (page 1); see §2.1 |
 | Fix the subject code | edit `labMeta.subjectCode` |
 | Add a YouTube video | set `youtubeVideo` (ID or URL); clear `previewVideo` if you want the thumbnail instead of the hover preview |
 | Run Python code | open **Code Lab** from the top bar, or press **Run this code** on any part page |

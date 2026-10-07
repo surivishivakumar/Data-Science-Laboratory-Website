@@ -1,5 +1,5 @@
 /*==========================================================================
-  DATA SCIENCE LABORATORY  -  MOHAN BABU UNIVERSITY
+  DATA SCIENCE LABORATORY
   ----------------------------------------------------------------------
   THIS IS THE ONLY FILE YOU NEED TO EDIT FOR CONTENT.
   Every piece of text, link, video and code shown on the website is
@@ -19,18 +19,8 @@
 ==========================================================================*/
 
 /* -------------------------------------------------------------------------
-   1. UNIVERSITY + LABORATORY BRANDING
+   1. LABORATORY BRANDING
    ------------------------------------------------------------------------- */
-var university = {
-  name: "Mohan Babu University",
-  // Official tagline lock-up taken from the university website (174x100).
-  // Keep the on-screen width <= 174px so it is downscaled, never upscaled.
-  logo: "assets/img/mbu-logo-with-tagline.png",
-  // High-resolution plain mark (1062x612), kept as a fallback.
-  logoPlain: "assets/img/mbu-logo.png",
-  website: "https://www.mbu.asia/"
-};
-
 var laboratory = {
   name: "Data Science Laboratory",
   tagline: "Digital Laboratory",
@@ -355,5 +345,5 @@ var experiments = [
 
 /* Make the array available to the app, both in the browser and in Node tests. */
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { university, laboratory, labMeta, student, social, experiments };
+  module.exports = { laboratory, labMeta, student, social, experiments };
 }
