@@ -17,7 +17,7 @@ DS-Lab-Website/
     ├── js/
     │   ├── data.js             ← ★ EDIT THIS FILE FOR ALL CONTENT ★
     │   ├── codelab-py.js       ← browser compatibility layer for Pyodide (seaborn, Excel, HTTP)
-    │   ├── codelab.js          ← the Code Lab (editor, files, notebook, engines)
+    │   ├── codelab.js          ← the Code Run page (editor, files, notebook, engines)
     │   └── app.js              ← search, routing, video hover, code viewer, page rendering
     ├── img/
     │   └── monthly-sales-expenses.png
@@ -166,15 +166,16 @@ Individual Section     header: "Experiment 1" + part letter
 Back navigation works via the breadcrumb at the top of every page and the
 prev/next buttons at the bottom.
 
-The top bar also links to **Home**, **Experiments** and **Code Run**. The first
-two simply jump to the matching part of page 1, so the four-step flow above is
-never duplicated.
+The top bar links to **Home**, **Experiments**, **Code Run**, **Modules** and
+**Tools**. Home and Experiments simply jump to the matching part of page 1, so
+the four-step flow above is never duplicated; Code Run, Modules and Tools are
+their own pages (`#/codelab`, `#/modules`, `#/tools`).
 
 ---
 
-## 3b. Code Lab - many languages, nothing to install
+## 3b. Code Run - many languages, nothing to install
 
-**Code Lab** (`#/codelab`) is a full editor plus runner. It lives in its own file,
+**Code Run** (`#/codelab`) is a full editor plus runner. It lives in its own file,
 `assets/js/codelab.js`, plus a small companion, `assets/js/codelab-py.js`, that
 supplies the few Python packages Pyodide is missing (see below). The lab exposes
 one function:
@@ -305,6 +306,26 @@ the next run rebuilds it (from cache, so it is quick).
 
 ---
 
+## 3c. Modules and Tools
+
+Two extra pages read straight from `assets/js/data.js`:
+
+- **Modules** (`#/modules`) - the five syllabus modules, in order, each with its
+  description and a link to the experiment that covers it. The `modules` array
+  maps module number -> experiment ids, so a module can hold more than one
+  experiment when the syllabus says so.
+- **Tools** (`#/tools`) - every library, format and runtime the experiment code
+  actually uses (Python, Pandas, NumPy, Requests, SQLite, `re`, Matplotlib,
+  Seaborn, CSV/JSON/Excel, plus Jupyter-style output and Pyodide on Code Run).
+  Each card gives the definition, what it is used for here, and links to the
+  experiments that use it. Nothing is listed that the code does not import.
+
+Both pages use the same breadcrumb, card and chip styling as the rest of the
+site, and both are ordinary top-bar links - no route, heading or search
+behaviour was removed to make room for them.
+
+---
+
 ## 4. Search
 
 The box on page 1 filters **experiment names** as you type, highlights the
@@ -359,7 +380,8 @@ for the full list of 24 filenames the site is already wired up for.
   (the choice is remembered).
 * Responsive from 320 px phones up to wide desktops; every page is checked at
   320, 360, 390, 430, 768, 1024, 1280 and 1920 px wide with no horizontal
-  scrolling. The top bar nav becomes a 2 × 2 grid on phone-width screens.
+  scrolling. The top bar nav becomes a five-item tab bar fixed to the bottom of
+  the screen on phone-width screens.
 * The top bar is sticky, so `scroll-padding-top` keeps anchor jumps, `Tab` focus
   and "scroll into view" from hiding a control underneath it. `--topbar-h` is
   measured from the live layout at load and on resize.
@@ -390,7 +412,7 @@ Change those five values and the whole site re-themes.
 | Add my photo | save as `assets/img/student-photo.jpg`, set `student.photo` |
 | Fix the subject code | edit `labMeta.subjectCode` |
 | Add a YouTube video | set `youtubeVideo` (ID or URL); clear `previewVideo` if you want the thumbnail instead of the hover preview |
-| Run Python code | open **Code Lab** from the top bar, or press **Run this code** on any part page |
+| Run Python code | open **Code Run** from the top bar, or press **Run this code** on any part page |
 | Add a GitHub link | set `githubLink` on that experiment |
 | Change the summary | edit `summary` on that experiment |
 | Add a new part | push another object into that experiment's `sections` array |

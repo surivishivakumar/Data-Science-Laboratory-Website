@@ -558,7 +558,7 @@
         '<div class="dl-row__text">' +
           '<b>Python source</b>' +
           "<span>" + esc(fileName) + " &middot; " + plural(code.split("\n").length, "line") +
-            " &middot; same code the Code Lab runs</span>" +
+               " &middot; same code the Code Run page runs</span>" +
         "</div>" +
         '<button class="btn btn--ghost dl-btn" type="button" data-dl-src="' + esc(key) + '">' +
           ICON.download + " Download .py" +
@@ -937,11 +937,11 @@
 
     return (
       '<div class="page stack">' +
-        crumb([{ label: "Home", href: "#/" }, { label: "Code Lab" }]) +
+           crumb([{ label: "Home", href: "#/" }, { label: "Code Run" }]) +
 
         '<header class="section-title-row" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">' +
           '<span class="chip chip--gold">Python 3.12</span>' +
-          '<h1 class="sec-title" style="margin:0">Code Lab</h1>' +
+             '<h1 class="sec-title" style="margin:0">Code Run</h1>' +
           '<span class="exp-head__spacer"></span>' +
           '<span class="chip chip--accent" data-lab-runtime>Runtimenot loaded</span>' +
         "</header>" +
@@ -1771,7 +1771,7 @@
               codeViewerHtml(code, fileName) +
               (code ? '<div class="code-runbar">' +
                 '<button class="btn btn--run" type="button" data-run-code>' + ICON.play + " Run this code</button>" +
-                '<span class="code-runbar__hint">Opens the Code Lab with this part pre-loaded</span>' +
+                   '<span class="code-runbar__hint">Opens Code Run with this part pre-loaded</span>' +
               "</div>" : "") +
             "</div>" +
           "</div>" +
@@ -1880,6 +1880,105 @@
   }
 
   /* ---------------------------------------------------------------------
+     PAGE - MODULES  (syllabus, mapped to the experiments in data.js)
+     --------------------------------------------------------------------- */
+  function renderModules() {
+    const cards = modules.map(function (m) {
+      const items = (m.experiments || []).map(function (id) {
+        const exp = findExperiment(id);
+        if (!exp) return "";
+        return (
+          "<li><b>" + esc(String(id)) + "</b><span>" +
+            '<a href="#/experiment/' + esc(String(id)) + '" data-link>' + esc(exp.name) + "</a>" +
+          "</span></li>"
+        );
+      }).join("");
+
+      return (
+        '<article class="card card--pad">' +
+          '<p class="eyebrow">Module ' + esc(String(m.number)) + "</p>" +
+          '<h2 class="sec-title" style="margin:0">' + esc(m.title) + "</h2>" +
+          '<p class="sec-sub">' + esc(m.description) + "</p>" +
+          '<h3 class="field-label"><span class="dot"></span>Experiments in this module &middot; ' +
+            plural((m.experiments || []).length, "experiment") + "</h3>" +
+          '<ul class="mini-list">' + (items || "<li><span>No experiments mapped yet.</span></li>") + "</ul>" +
+        "</article>"
+      );
+    }).join("");
+
+    return (
+      '<div class="page stack">' +
+        crumb([{ label: "Home", href: "#/" }, { label: "Modules" }]) +
+
+        '<section class="card card--pad">' +
+          '<p class="eyebrow">' + esc(laboratory.name) + "</p>" +
+          '<h1 class="preview-title"><span class="hl">Modules</span></h1>' +
+          '<p class="sec-sub">The laboratory syllabus is split into ' + plural(modules.length, "module") +
+            ", following the same order as the experiment catalogue. Each module lists the experiments that cover it.</p>" +
+          '<div class="meta-row">' +
+            '<span class="chip">' + plural(modules.length, "module") + "</span>" +
+            '<span class="chip">' + plural(experiments.length, "experiment") + "</span>" +
+            '<span class="chip">' + esc(labMeta.subjectCode) + "</span>" +
+          "</div>" +
+        "</section>" +
+
+        '<div class="exp-grid">' + cards + "</div>" +
+      "</div>"
+    );
+  }
+
+  /* ---------------------------------------------------------------------
+     PAGE - TOOLS  (libraries actually used by the experiment code)
+     --------------------------------------------------------------------- */
+  function renderTools() {
+    const cards = tools.map(function (t) {
+      const links = (t.experiments || []).map(function (id) {
+        const exp = findExperiment(id);
+        return exp
+          ? '<a class="chip" href="#/experiment/' + esc(String(id)) + '" data-link>Experiment ' + esc(String(id)) + "</a>"
+          : "";
+      }).join("");
+      const where = t.where
+        ? '<a class="chip chip--accent" href="' + esc(t.whereHref || "#/codelab") + '" data-link>' + esc(t.where) + "</a>"
+        : "";
+      const related = (links + where) ||
+        '<span class="chip">Not used directly</span>';
+
+      return (
+        '<article class="card card--pad">' +
+          '<p class="eyebrow">' + esc(t.kind || "Tool") + "</p>" +
+          '<h2 class="sec-title" style="margin:0">' + esc(t.name) + "</h2>" +
+          '<p class="sec-sub">' + esc(t.definition) + "</p>" +
+          '<h3 class="field-label"><span class="dot"></span>Used in this laboratory</h3>' +
+          '<p class="summary">' + esc(t.use) + "</p>" +
+          '<h3 class="field-label"><span class="dot"></span>Related experiments</h3>' +
+          '<div class="meta-row">' + related + "</div>" +
+        "</article>"
+      );
+    }).join("");
+
+    return (
+      '<div class="page stack">' +
+        crumb([{ label: "Home", href: "#/" }, { label: "Tools" }]) +
+
+        '<section class="card card--pad">' +
+          '<p class="eyebrow">' + esc(laboratory.name) + "</p>" +
+          '<h1 class="preview-title"><span class="hl">Tools</span></h1>' +
+          '<p class="sec-sub">Everything listed here is taken from the experiment source code in this ' +
+            "laboratory - libraries, formats and runtimes the experiments really use. Nothing has been added just because it is popular.</p>" +
+          '<div class="meta-row">' +
+            '<span class="chip">' + plural(tools.length, "tool") + "</span>" +
+            '<span class="chip">' + plural(experiments.length, "experiment") + "</span>" +
+            '<a class="chip chip--accent" href="#/codelab" data-link>Try them in Code Run</a>' +
+          "</div>" +
+        "</section>" +
+
+        '<div class="exp-grid">' + cards + "</div>" +
+      "</div>"
+    );
+  }
+
+  /* ---------------------------------------------------------------------
      6. RENDER CONTROLLER
      --------------------------------------------------------------------- */
   function render() {
@@ -1934,6 +2033,16 @@
         }
         break;
       }
+
+      case "modules":
+        view.innerHTML = renderModules();
+        pageTitle = "Modules - " + laboratory.name;
+        break;
+
+      case "tools":
+        view.innerHTML = renderTools();
+        pageTitle = "Tools - " + laboratory.name;
+        break;
 
       case "experiment": {
         const exp = findExperiment(route.id);
@@ -1991,6 +2100,8 @@
     if (route.name === "catalogue") active = "catalogue";
     else if (route.name === "student") active = "dashboard";
     else if (route.name === "codelab") active = "codelab";
+    else if (route.name === "modules") active = "modules";
+    else if (route.name === "tools") active = "tools";
     else if (route.name === "experiment" || route.name === "overview" || route.name === "section") active = "catalogue";
     $$(".topnav__link").forEach(function (link) {
       const on = link.getAttribute("data-nav") === active;

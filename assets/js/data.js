@@ -14,6 +14,8 @@
     5. VIDEOS       -> drop .mp4 files into assets/videos/ using the exact
                         filenames listed in assets/videos/README.txt
     6. CODE         -> replace the `code` string for any section
+    7. MODULES      -> the `modules` array maps the syllabus to experiments
+    8. TOOLS        -> the `tools` array lists libraries the experiments use
 
   After editing, just refresh the browser. No build step, no server needed.
 ==========================================================================*/
@@ -343,7 +345,158 @@ var experiments = [
   }
 ];
 
+/* -------------------------------------------------------------------------
+   4. MODULES  (shown on the Modules page)
+   -------------------------------------------------------------------------
+   The syllabus of this laboratory is five experiments, so the five modules
+   follow the same order as the `experiments` array above. `experiments`
+   lists the experiment ids that belong to the module.
+   ------------------------------------------------------------------------- */
+var modules = [
+  {
+    number: 1,
+    title: "Data Import and Export",
+    description:
+      "Building a DataFrame from a Python dictionary, inspecting it with head() and shape, " +
+      "then persisting it three ways - CSV with to_csv(), JSON with to_json() and an Excel " +
+      "workbook with to_excel() - and reading each format back to confirm the round trip.",
+    experiments: [1]
+  },
+  {
+    number: 2,
+    title: "Web Data, APIs and SQL Integration",
+    description:
+      "The two ways real data reaches a workflow: calling a REST API with the requests " +
+      "library and parsing the JSON payload into a DataFrame, and creating, querying and " +
+      "updating a SQLite database from Python with sqlite3.",
+    experiments: [2]
+  },
+  {
+    number: 3,
+    title: "Data Cleaning, Transformation and Regular Expressions",
+    description:
+      "Cleaning messy data before analysis - missing values with isna(), fillna() and " +
+      "dropna(), categorical encoding with map() and replace(), outlier detection with the " +
+      "1.5 x IQR rule, and text extraction with regular expressions.",
+    experiments: [3]
+  },
+  {
+    number: 4,
+    title: "MultiIndex, Reshaping and Combining DataFrames",
+    description:
+      "Handling data that is more complex than a flat table - hierarchical MultiIndex " +
+      "lookups, stack() and unstack() reshaping between wide and long layouts, and merging " +
+      "or combining datasets with pd.merge() and combine_first().",
+    experiments: [4]
+  },
+  {
+    number: 5,
+    title: "Data Visualization with Matplotlib and Seaborn",
+    description:
+      "The full plotting workflow - line, scatter, histogram, KDE, box, pair, grouped and " +
+      "stacked bar charts, annotated multi-panel subplots and PNG export - over the Iris " +
+      "dataset and custom datasets.",
+    experiments: [5]
+  }
+];
+
+/* -------------------------------------------------------------------------
+   5. TOOLS  (shown on the Tools page)
+   -------------------------------------------------------------------------
+   Only libraries, formats and runtimes that appear in the experiment code or
+   in the Code Run page are listed. Each entry:
+      kind          small category label shown above the name
+      name          display name
+      definition    one-line explanation of what the tool is
+      use           what it is used for in THIS laboratory
+      experiments   experiment ids that use it ([] when it belongs to Code Run)
+      where         optional label for the non-experiment place it is used
+      whereHref     optional link target for `where` (defaults to #/codelab)
+   ------------------------------------------------------------------------- */
+var tools = [
+  {
+    kind: "Language",
+    name: "Python",
+    definition: "The general-purpose programming language every experiment is written in.",
+    use: "All experiment source is plain Python; the Code Run page executes it in the browser.",
+    experiments: [1, 2, 3, 4, 5]
+  },
+  {
+    kind: "Library",
+    name: "Pandas",
+    definition: "The DataFrame library for tabular data in Python.",
+    use: "Creates, inspects, exports, cleans, reshapes and merges the data in every experiment.",
+    experiments: [1, 2, 3, 4, 5]
+  },
+  {
+    kind: "Library",
+    name: "NumPy",
+    definition: "Numerical arrays and mathematics for Python.",
+    use: "Supplies NaN for the missing-value tables and the quantile maths behind the IQR outlier fences in Experiment 3; also the Code Run starter code.",
+    experiments: [3],
+    where: "Code Run starter code"
+  },
+  {
+    kind: "Library",
+    name: "Requests",
+    definition: "A simple HTTP client for calling web services from Python.",
+    use: "Calls the public GitHub REST API, prints the HTTP status code and turns the JSON response into a DataFrame.",
+    experiments: [2]
+  },
+  {
+    kind: "Standard library",
+    name: "SQLite (sqlite3)",
+    definition: "A zero-configuration relational database that ships with Python.",
+    use: "Connects to Engineer.db, creates the Engineers table and runs INSERT, SELECT, UPDATE and DELETE in Experiment 2 part B.",
+    experiments: [2]
+  },
+  {
+    kind: "Standard library",
+    name: "Regular Expressions (re)",
+    definition: "Python's pattern-matching library for searching inside text.",
+    use: "findall(), search(), match(), split() and sub() pull phone numbers and email addresses out of free text in Experiment 3 part D.",
+    experiments: [3]
+  },
+  {
+    kind: "Library",
+    name: "Matplotlib",
+    definition: "The base 2-D plotting library for Python.",
+    use: "Line plots, annotated multi-panel subplots, grouped and stacked bar charts, histograms, scatter plots and 300 DPI PNG export in Experiment 5.",
+    experiments: [5]
+  },
+  {
+    kind: "Library",
+    name: "Seaborn",
+    definition: "Statistical charts built on top of Matplotlib.",
+    use: "Scatter plots coloured by species, histograms with a KDE overlay, box plots and pair plots over the Iris and marks datasets.",
+    experiments: [5]
+  },
+  {
+    kind: "Data formats",
+    name: "CSV, JSON and Excel",
+    definition: "The three flat-file formats pandas reads and writes.",
+    use: "The to_csv / read_csv, to_json / read_json and to_excel / read_excel round trips demonstrated in Experiment 1.",
+    experiments: [1]
+  },
+  {
+    kind: "Notebook",
+    name: "Jupyter Notebook",
+    definition: "The notebook format that mixes code, output and notes in cells.",
+    use: "Code Run renders DataFrame output as HTML tables the way Jupyter does, and files can be opened with a .ipynb name.",
+    experiments: [],
+    where: "Code Run"
+  },
+  {
+    kind: "Runtime",
+    name: "Pyodide",
+    definition: "CPython compiled to WebAssembly, so Python runs entirely inside the browser.",
+    use: "Powers the Code Run page, delivering pandas, NumPy, Matplotlib and Seaborn with nothing to install.",
+    experiments: [],
+    where: "Code Run"
+  }
+];
+
 /* Make the array available to the app, both in the browser and in Node tests. */
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { laboratory, labMeta, student, social, experiments };
+  module.exports = { laboratory, labMeta, student, social, experiments, modules, tools };
 }

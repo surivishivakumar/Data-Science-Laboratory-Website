@@ -211,7 +211,7 @@ button, input { font: inherit; color: inherit; }
   border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
 }
 
-/* ---- main navigation: Home / Experiments / Code Run ---- */
+/* ---- main navigation: Home / Experiments / Code Run / Modules / Tools ---- */
 .topnav {
   display: flex;
   align-items: center;
@@ -1368,10 +1368,10 @@ body.cm-open { overflow: hidden; }
   .idcard__field dd { text-align: left; }
   .code-panel { max-height: 64vh; }
   .overview-cta { flex-direction: column; align-items: flex-start; gap: 14px; }
-  /* Four navigation items no longer fit on a single phone-width row. Lay them
-     out as a balanced 2x2 grid rather than letting the last one wrap onto a
-     row of its own and stretch across the whole bar. */
-  .topnav { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  /* Five navigation items no longer fit on a single phone-width row. Lay them
+     out as an even grid rather than letting the last one wrap onto a row of
+     its own and stretch across the whole bar. */
+  .topnav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
   .topnav__link {
     flex: initial;
     text-align: center;
@@ -1384,10 +1384,10 @@ body.cm-open { overflow: hidden; }
 
 /* --------------------------------------------------------------------------
    PHONE NAVIGATION
-   The top bar stacks into three rows (brand, 2x2 nav grid, tools) which came
+   The top bar stacks into three rows (brand, nav grid, tools) which came
    to 235px - over a quarter of a 844px phone screen - and stayed pinned there
    while scrolling, hiding the top of whatever you navigated to. On phones the
-   header now scrolls away with the page and the four links become a fixed
+   header now scrolls away with the page and the five links become a fixed
    bottom tab bar, which is reachable with a thumb and never covers content
    once .view reserves space for it.
    -------------------------------------------------------------------------- */
@@ -1414,7 +1414,7 @@ body.cm-open { overflow: hidden; }
     z-index: 80;
     order: 0;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 0;
     padding: 6px max(8px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     border: 1px solid var(--border);
