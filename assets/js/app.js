@@ -1900,7 +1900,7 @@
       case "catalogue":
         view.innerHTML = renderHome();
         wireHome();
-        pageTitle = "Experiment Catalogue - " + laboratory.name;
+        pageTitle = "Experiments - " + laboratory.name;
         scrollToBlock("#catalogue");
         break;
 
@@ -1914,13 +1914,13 @@
       case "dashboard":
         view.innerHTML = renderHome();
         wireHome();
-        pageTitle = "Dashboard - " + laboratory.name;
+        pageTitle = "Home - " + laboratory.name;
         scrollToBlock("#dashboardTop");
         break;
 
       case "codelab": {
         const carry = pendingLabCode;
-        pageTitle = "Code Lab - " + laboratory.name;
+        pageTitle = "Code Run - " + laboratory.name;
         if (window.DSCodeLab && typeof window.DSCodeLab.mount === "function") {
           view.innerHTML = '<div id="lab2Host"></div>';
           window.DSCodeLab.mount(document.getElementById("lab2Host"), {
@@ -1989,7 +1989,7 @@
     const route = parseRoute();
     let active = "dashboard";
     if (route.name === "catalogue") active = "catalogue";
-    else if (route.name === "student") active = "student";
+    else if (route.name === "student") active = "dashboard";
     else if (route.name === "codelab") active = "codelab";
     else if (route.name === "experiment" || route.name === "overview" || route.name === "section") active = "catalogue";
     $$(".topnav__link").forEach(function (link) {

@@ -166,9 +166,9 @@ Individual Section     header: "Experiment 1" + part letter
 Back navigation works via the breadcrumb at the top of every page and the
 prev/next buttons at the bottom.
 
-The top bar also links to **Dashboard**, **Experiment Catalogue**, **Code Lab**
-and **Student Card**. The first three besides Code Lab simply jump to the
-matching part of page 1, so the four-step flow above is never duplicated.
+The top bar also links to **Home**, **Experiments** and **Code Run**. The first
+two simply jump to the matching part of page 1, so the four-step flow above is
+never duplicated.
 
 ---
 
