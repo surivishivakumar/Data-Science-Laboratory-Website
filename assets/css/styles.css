@@ -380,6 +380,17 @@ button, input { font: inherit; color: inherit; }
 .btn--ghost { background: transparent; }
 .btn--sm { padding: 8px 14px; font-size: 13px; }
 
+.btn--danger {
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.1);
+}
+.btn--danger:hover {
+  border-color: rgba(248, 113, 113, 0.8);
+  background: rgba(248, 113, 113, 0.18);
+  box-shadow: 0 12px 28px -16px rgba(248, 113, 113, 0.9);
+}
+
 .btn--add {
   position: relative;
   background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 20%, transparent), color-mix(in srgb, var(--accent-3) 20%, transparent));
@@ -792,6 +803,21 @@ button, input { font: inherit; color: inherit; }
 .cm__reset:hover { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 10%, transparent); }
 body.cm-open { overflow: hidden; }
 
+/* Smaller confirm dialog (delete / restore prompts) */
+.cm__panel--sm { width: min(460px, 100%); }
+.cm__body { padding: 18px 20px; overflow-y: auto; }
+.cm__msg { margin: 0; font-size: 14px; line-height: 1.65; color: var(--text-muted); }
+
+/* Field variants used by the Add / Edit Experiment dialog */
+.fld--wide { grid-column: 1 / -1; }
+.fld__input--area { min-height: 84px; line-height: 1.6; resize: vertical; }
+.fld__input--code {
+  min-height: 190px;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.6;
+  white-space: pre; resize: vertical;
+}
+.fld__input[readonly] { opacity: 0.7; cursor: not-allowed; background: var(--surface-2); }
+
 @media (max-width: 560px) {
   .cm { padding: 12px; align-items: flex-end; }
   .cm__panel { width: 100%; max-height: 92vh; border-radius: var(--r-lg) var(--r-lg) 0 0; }
@@ -814,6 +840,7 @@ body.cm-open { overflow: hidden; }
 .exp-head__count { font-size: 14px; font-weight: 600; color: var(--text-dim); }
 .exp-head__spacer { flex: 1; }
 .exp-head__hint { font-size: 12.5px; color: var(--text-dim); }
+.exp-head__actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
 .exp-grid {
   display: grid;
@@ -880,6 +907,9 @@ body.cm-open { overflow: hidden; }
 }
 .empty-state h3 { margin: 0; color: var(--text); font-size: 17px; }
 
+/* Edit / Delete row on the experiment detail pages */
+.exp-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: auto; padding-top: 4px; }
+
 /* --------------------------------------------------------------------------
    8. VIDEO FRAME + HOVER PREVIEW
    -------------------------------------------------------------------------- */
@@ -894,6 +924,14 @@ body.cm-open { overflow: hidden; }
 
 .media__video { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #05080f; }
 .media__video--tall { aspect-ratio: 4 / 3; }
+
+/* Compact players: every video frame is capped so the experiment pages read
+   as a document instead of a wall of video. The 16/9 ratio keeps the height
+   in step with the width, and the cap never exceeds the column it sits in. */
+.media,
+.media__embed,
+.media__poster,
+.yt { max-width: min(100%, 480px); }
 
 /* ---- YouTube variants ------------------------------------------------------
    An embedded player and a click-to-open poster card. Both replace the local
@@ -1163,6 +1201,25 @@ body.cm-open { overflow: hidden; }
   max-width: 74ch;
 }
 .summary strong { color: var(--text); font-weight: 700; }
+
+/* Local folder / file this experiment was written in */
+.source-ref {
+  display: flex; flex-direction: column; gap: 7px;
+  padding: 13px 14px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.source-ref__label {
+  font-size: 11px; font-weight: 750; letter-spacing: 1.3px;
+  text-transform: uppercase; color: var(--accent);
+}
+.source-ref__path {
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.55;
+  color: var(--text); word-break: break-all;
+}
+.source-ref__files { display: flex; flex-wrap: wrap; gap: 6px; }
+.source-ref__note { font-size: 11.5px; line-height: 1.5; color: var(--text-dim); }
 
 .field-label {
   display: flex; align-items: center; gap: 9px;

@@ -409,6 +409,554 @@
   }
 
   /* ---------------------------------------------------------------------
+     1c. EXPERIMENT STORE  (built-in defaults + visitor changes)
+     ---------------------------------------------------------------------
+     data.js keeps the five built-in experiments exactly as written. Every
+     change made through the Add / Edit / Delete dialogs is saved separately
+     in localStorage and replayed over those defaults on the next load, so
+     the original list can always be restored. Experiments added by the
+     visitor are stored whole under `created`. */
+  const EXP_STORE_KEY = "dslab.experiments.v1";
+  const DEFAULT_EXPERIMENTS = JSON.parse(JSON.stringify(experiments));
+
+  /* module number -> built-in experiment ids, captured once from data.js */
+  const DEFAULT_MODULE_MAP = {};
+  modules.forEach(function (m) {
+    DEFAULT_MODULE_MAP[String(m.number)] = (m.experiments || []).map(String);
+  });
+
+  function expKey(id) { return String(id == null ? "" : id).trim(); }
+
+  function readExpStore() {
+    try {
+      const raw = localStorage.getItem(EXP_STORE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      return data && typeof data === "object" ? data : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeExpStore(data) {
+    try {
+      localStorage.setItem(EXP_STORE_KEY, JSON.stringify(data));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function expStore() {
+    const store = readExpStore() || {};
+    store.edits = store.edits && typeof store.edits === "object" ? store.edits : {};
+    store.created = store.created && typeof store.created === "object" ? store.created : {};
+    store.deleted = Array.isArray(store.deleted) ? store.deleted : [];
+    return store;
+  }
+
+  /* Numeric ids sort first, in number order; anything non-numeric stays
+     alphabetical at the end, so the catalogue never jumps around. */
+  function compareExperiments(a, b) {
+    const na = Number(a.id);
+    const nb = Number(b.id);
+    const an = expKey(a.id) !== "" && !isNaN(na);
+    const bn = expKey(b.id) !== "" && !isNaN(nb);
+    if (an && bn) return na - nb;
+    if (an) return -1;
+    if (bn) return 1;
+    return expKey(a.id).localeCompare(expKey(b.id));
+  }
+
+  /* Rebuild the live `experiments` array in place: defaults, then saved
+     edits, then added experiments, minus anything deleted, in id order.
+     Mutating the array (instead of reassigning) keeps every reference the
+     router and the views already hold valid. */
+  function rebuildExperiments() {
+    const store = expStore();
+    const list = [];
+
+    DEFAULT_EXPERIMENTS.forEach(function (base) {
+      const key = expKey(base.id);
+      if (store.deleted.indexOf(key) !== -1) return;
+      const copy = JSON.parse(JSON.stringify(base));
+      if (store.edits[key]) Object.assign(copy, store.edits[key]);
+      list.push(copy);
+    });
+
+    Object.keys(store.created).forEach(function (key) {
+      if (store.deleted.indexOf(key) !== -1) return;
+      list.push(JSON.parse(JSON.stringify(store.created[key])));
+    });
+
+    list.sort(compareExperiments);
+    experiments.length = 0;
+    list.forEach(function (experiment) {
+      delete experiment.__hay; /* the search index is rebuilt on demand */
+      experiments.push(experiment);
+    });
+  }
+
+  function isBuiltIn(id) {
+    return DEFAULT_EXPERIMENTS.some(function (e) { return expKey(e.id) === expKey(id); });
+  }
+
+  function isIdTaken(id, exceptId) {
+    return experiments.some(function (e) {
+      if (expKey(e.id) !== expKey(id)) return false;
+      return exceptId == null || expKey(e.id) !== expKey(exceptId);
+    });
+  }
+
+  /* Built-ins are recorded as edits, added experiments as creations. */
+  function persistExperiment(record) {
+    const store = expStore();
+    const key = expKey(record.id);
+    if (isBuiltIn(key)) store.edits[key] = record;
+    else store.created[key] = record;
+    const stored = writeExpStore(store);
+    rebuildExperiments();
+    return stored;
+  }
+
+  function removeExperiment(id) {
+    const store = expStore();
+    const key = expKey(id);
+    if (isBuiltIn(key)) {
+      if (store.deleted.indexOf(key) === -1) store.deleted.push(key);
+      delete store.edits[key];
+    } else {
+      delete store.created[key];
+      delete store.edits[key];
+    }
+    const stored = writeExpStore(store);
+    rebuildExperiments();
+    return stored;
+  }
+
+  /* Puts the built-in experiments back exactly as data.js defines them.
+     Experiments the visitor added are kept - they are not defaults. */
+  function restoreDefaultExperiments() {
+    const store = expStore();
+    store.edits = {};
+    store.deleted = [];
+    const stored = writeExpStore(store);
+    rebuildExperiments();
+    return stored;
+  }
+
+  /* ---- module / tools mapping -----------------------------------------
+     A built-in experiment belongs to whichever module lists it in data.js;
+     an experiment added through the form carries its own `module` value. */
+  function effectiveModule(experiment) {
+    const own = experiment.module;
+    if (own !== undefined && own !== null && String(own).trim() !== "") return String(own).trim();
+    const key = expKey(experiment.id);
+    const found = Object.keys(DEFAULT_MODULE_MAP).filter(function (num) {
+      return DEFAULT_MODULE_MAP[num].indexOf(key) !== -1;
+    });
+    return found[0] || "";
+  }
+
+  function moduleExperiments(moduleDef) {
+    const num = String(moduleDef.number);
+    return experiments.filter(function (e) { return effectiveModule(e) === num; });
+  }
+
+  function toolKey(value) {
+    return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  }
+
+  /* Matches a tool against both the ids data.js lists and the `tools`
+     names an experiment carries, so an experiment added with
+     "Seaborn" shows up under the Seaborn card. */
+  function toolExperiments(toolDef) {
+    const want = toolKey(toolDef.name);
+    return experiments.filter(function (experiment) {
+      const listed = (toolDef.experiments || []).some(function (id) {
+        return expKey(id) === expKey(experiment.id);
+      });
+      if (listed) return true;
+      return (experiment.tools || []).some(function (name) {
+        const got = toolKey(name);
+        if (!got || !want) return false;
+        if (got === want) return true;
+        if (got.length < 3 || want.length < 3) return false;
+        return got.indexOf(want) !== -1 || want.indexOf(got) !== -1;
+      });
+    });
+  }
+
+  /* Chips for the module and tools of an experiment, shown on the detail
+     pages whenever either is known. */
+  function experimentTagsHtml(experiment) {
+    const chips = [];
+    const mod = effectiveModule(experiment);
+    if (mod) chips.push('<span class="chip chip--gold">Module ' + esc(mod) + "</span>");
+    (experiment.tools || []).forEach(function (name) {
+      chips.push('<span class="chip">' + esc(String(name)) + "</span>");
+    });
+    return chips.length ? '<div class="meta-row">' + chips.join("") + "</div>" : "";
+  }
+
+  /* The folder the experiment lives in on this computer. A browser cannot
+     open a local path, so it is shown as a reference only. */
+  function sourceRefHtml(experiment) {
+    const path = String(experiment.sourcePath || "").trim();
+    if (!path) return "";
+    const files = (experiment.sourceFiles || []).map(function (file) {
+      return '<span class="chip">' + esc(String(file)) + "</span>";
+    }).join("");
+    return (
+      '<div class="source-ref">' +
+        '<span class="source-ref__label">Source folder</span>' +
+        '<code class="source-ref__path">' + esc(path) + "</code>" +
+        (files ? '<div class="source-ref__files">' + files + "</div>" : "") +
+        '<span class="source-ref__note">Local path on this computer - open it from the file explorer.</span>' +
+      "</div>"
+    );
+  }
+
+  /* ---- small confirm dialog (delete / restore prompts) ----------------- */
+  let confirmModal = null;
+  let confirmResolve = null;
+
+  function closeConfirm(ok) {
+    if (!confirmModal || confirmModal.hidden) return;
+    confirmModal.hidden = true;
+    document.body.classList.remove("cm-open");
+    const resolve = confirmResolve;
+    confirmResolve = null;
+    if (resolve) resolve(ok);
+  }
+
+  function confirmDialog(options) {
+    return new Promise(function (resolve) {
+      if (!confirmModal) {
+        const wrap = document.createElement("div");
+        wrap.className = "cm";
+        wrap.id = "confirmModal";
+        wrap.hidden = true;
+        wrap.innerHTML =
+          '<div class="cm__backdrop" data-confirm="cancel"></div>' +
+          '<div class="cm__panel cm__panel--sm" role="alertdialog" aria-modal="true" ' +
+            'aria-labelledby="confirmTitle" aria-describedby="confirmMsg">' +
+            '<div class="cm__head">' +
+              '<div><h3 class="cm__title" id="confirmTitle"></h3></div>' +
+              '<button class="cm__x" type="button" data-confirm="cancel" aria-label="Close">' + ICON.close + "</button>" +
+            "</div>" +
+            '<div class="cm__body"><p class="cm__msg" id="confirmMsg"></p></div>' +
+            '<div class="cm__actions">' +
+              '<span class="cm__gap"></span>' +
+              '<button class="btn btn--sm" type="button" data-confirm="cancel">Cancel</button>' +
+              '<button class="btn btn--sm" type="button" data-confirm="ok" id="confirmOk"></button>' +
+            "</div>" +
+          "</div>";
+        document.body.appendChild(wrap);
+        confirmModal = wrap;
+
+        wrap.addEventListener("click", function (event) {
+          const action = event.target.closest("[data-confirm]");
+          if (action) closeConfirm(action.getAttribute("data-confirm") === "ok");
+        });
+        document.addEventListener("keydown", function (event) {
+          if (event.key === "Escape" && confirmModal && !confirmModal.hidden) closeConfirm(false);
+        });
+      }
+
+      $("#confirmTitle", confirmModal).textContent = options.title || "Are you sure?";
+      $("#confirmMsg", confirmModal).textContent = options.message || "";
+      const ok = $("#confirmOk", confirmModal);
+      ok.textContent = options.okLabel || "Confirm";
+      ok.classList.toggle("btn--danger", !!options.danger);
+      ok.classList.toggle("btn--primary", !options.danger);
+
+      confirmResolve = resolve;
+      confirmModal.hidden = false;
+      document.body.classList.add("cm-open");
+      const cancel = $('[data-confirm="cancel"].btn', confirmModal);
+      if (cancel) cancel.focus();
+    });
+  }
+
+  /* ---- Add / Edit experiment form ------------------------------------- */
+  const EXP_FIELDS = [
+    { key: "id", label: "Experiment ID", req: true, max: 12,
+      rx: /^[A-Za-z0-9][A-Za-z0-9\-/. ]*$/, rxMsg: "Use letters, numbers and - / . only.",
+      hint: "Number or short code used in the address bar, for example 6." },
+    { key: "name", label: "Experiment Title", req: true, min: 3, max: 120, wide: true },
+    { key: "tagline", label: "Card line (short description)", req: false, max: 160, wide: true,
+      hint: "One line shown under the title on the experiment card." },
+    { key: "module", label: "Module", type: "module", req: false,
+      hint: "Which syllabus module this experiment belongs to." },
+    { key: "tools", label: "Tools / libraries used", req: false, max: 200,
+      hint: "Comma separated, for example pandas, Matplotlib." },
+    { key: "video", label: "Video path or URL", req: false, max: 300, wide: true,
+      hint: "A file such as assets/videos/exp6-preview.mp4, or a YouTube link. Optional." },
+    { key: "sourcePath", label: "Experiment folder / file path", req: false, max: 300, wide: true,
+      hint: "Where the notebook lives on this computer, for example C:\\Users\\you\\Exp6. Shown as a reference." },
+    { key: "objective", label: "Objective", type: "area", req: false, max: 600, wide: true,
+      hint: "What the experiment sets out to show." },
+    { key: "summary", label: "Description", type: "area", req: false, max: 4000, wide: true },
+    { key: "output", label: "Output / Result", type: "area", req: false, max: 2000, wide: true },
+    { key: "code", label: "Python code (Part A)", type: "code", req: false, max: 20000, wide: true,
+      hint: "Runs on the Code Run page and downloads as the part A .py file." }
+  ];
+
+  let expModal = null;
+  let expModalTrigger = null;
+  let expModalMode = "add";      /* "add" or "edit" */
+  let expModalOriginalId = null; /* id of the experiment being edited */
+
+  function expFieldHtml(f) {
+    const id = "ef-" + f.key;
+    const label =
+      '<label class="fld__label" for="' + id + '">' + esc(f.label) +
+        (f.req ? ' <span class="fld__req" aria-hidden="true">*</span>' : "") +
+      "</label>";
+    const described = ' aria-describedby="' + id + '-err"';
+
+    let control;
+    if (f.type === "area") {
+      control = '<textarea class="fld__input fld__input--area" id="' + id + '" name="' + f.key +
+        '" maxlength="' + f.max + '"' + described + "></textarea>";
+    } else if (f.type === "code") {
+      control = '<textarea class="fld__input fld__input--code" id="' + id + '" name="' + f.key +
+        '" maxlength="' + f.max + '" spellcheck="false"' + described + "></textarea>";
+    } else if (f.type === "module") {
+      const options = ['<option value="">Automatic (from the syllabus)</option>'].concat(
+        modules.map(function (m) {
+          return '<option value="' + esc(String(m.number)) + '">Module ' +
+            esc(String(m.number)) + " - " + esc(m.title) + "</option>";
+        })
+      ).join("");
+      control = '<select class="fld__input" id="' + id + '" name="' + f.key + '"' + described + ">" +
+        options + "</select>";
+    } else {
+      control = '<input class="fld__input" id="' + id + '" name="' + f.key + '" type="text"' +
+        ' maxlength="' + f.max + '" autocomplete="off" spellcheck="false"' + described + ">";
+    }
+
+    return (
+      '<div class="fld' + (f.wide ? " fld--wide" : "") + '">' +
+        label + control +
+        (f.hint ? '<p class="fld__hint">' + esc(f.hint) + "</p>" : "") +
+        '<p class="fld__err" id="' + id + '-err" role="alert"></p>' +
+      "</div>"
+    );
+  }
+
+  function ensureExpModal() {
+    if (expModal) return expModal;
+    const wrap = document.createElement("div");
+    wrap.className = "cm";
+    wrap.id = "expModal";
+    wrap.hidden = true;
+    wrap.innerHTML =
+      '<div class="cm__backdrop" data-exp-close></div>' +
+      '<div class="cm__panel" role="dialog" aria-modal="true" aria-labelledby="efTitle">' +
+        '<div class="cm__head">' +
+          "<div>" +
+            '<h3 class="cm__title" id="efTitle">Add Experiment</h3>' +
+            '<p class="cm__sub" id="efSub">Saved in this browser - assets/js/data.js is never changed.</p>' +
+          "</div>" +
+          '<button class="cm__x" type="button" aria-label="Close" data-exp-close>' + ICON.close + "</button>" +
+        "</div>" +
+        '<form class="cm__form" id="expEditForm" novalidate>' +
+          '<div class="cm__grid">' + EXP_FIELDS.map(expFieldHtml).join("") + "</div>" +
+          '<div class="cm__actions">' +
+            '<span class="cm__gap"></span>' +
+            '<button class="btn btn--sm" type="button" data-exp-close>Cancel</button>' +
+            '<button class="btn btn--sm btn--primary" type="submit">Save Experiment</button>' +
+          "</div>" +
+        "</form>" +
+      "</div>";
+    document.body.appendChild(wrap);
+    expModal = wrap;
+
+    wrap.addEventListener("click", function (event) {
+      if (event.target.closest("[data-exp-close]")) closeExpEditor();
+    });
+    $("#expEditForm", wrap).addEventListener("submit", function (event) {
+      event.preventDefault();
+      saveExpEditor();
+    });
+    wrap.addEventListener("input", function (event) {
+      if (event.target.classList && event.target.classList.contains("fld__input")) {
+        clearFieldError(event.target);
+      }
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && expModal && !expModal.hidden) closeExpEditor();
+    });
+    return wrap;
+  }
+
+  function fillExpForm(experiment) {
+    const isNew = !experiment;
+    EXP_FIELDS.forEach(function (f) {
+      const input = $("#ef-" + f.key, expModal);
+      if (!input) return;
+
+      let value = "";
+      if (f.key === "code") {
+        value = isNew ? "" : String((experiment.sections[0] || {}).code || "");
+      } else if (f.key === "video") {
+        value = isNew ? "" : String(experiment.previewVideo || experiment.youtubeVideo || "");
+      } else if (f.key === "tools") {
+        value = isNew ? "" : (experiment.tools || []).join(", ");
+      } else if (f.key === "module") {
+        value = isNew ? "" : effectiveModule(experiment);
+      } else {
+        value = isNew ? "" : String(experiment[f.key] == null ? "" : experiment[f.key]);
+      }
+
+      input.value = value;
+      clearFieldError(input);
+    });
+
+    /* The id is editable only while adding - it is the key every link and
+       every saved change is built from, so editing it would orphan them. */
+    const idInput = $("#ef-id", expModal);
+    if (idInput) idInput.readOnly = !isNew;
+  }
+
+  function openExpEditor(experiment, trigger) {
+    ensureExpModal();
+    expModalMode = experiment ? "edit" : "add";
+    expModalOriginalId = experiment ? expKey(experiment.id) : null;
+    expModalTrigger = trigger || document.activeElement;
+
+    $("#efTitle", expModal).textContent = experiment
+      ? "Edit Experiment " + experiment.id
+      : "Add Experiment";
+    $("#efSub", expModal).textContent = experiment
+      ? "Changes are stored in this browser only; assets/js/data.js stays untouched."
+      : "Saved in this browser - assets/js/data.js is never changed.";
+
+    fillExpForm(experiment);
+    expModal.hidden = false;
+    document.body.classList.add("cm-open");
+
+    const focusTarget = experiment ? $("#ef-name", expModal) : $("#ef-id", expModal);
+    if (focusTarget) focusTarget.focus();
+  }
+
+  function closeExpEditor() {
+    if (!expModal || expModal.hidden) return;
+    expModal.hidden = true;
+    document.body.classList.remove("cm-open");
+    if (expModalTrigger && document.contains(expModalTrigger)) expModalTrigger.focus();
+    expModalTrigger = null;
+  }
+
+  function readExpForm() {
+    const values = {};
+    EXP_FIELDS.forEach(function (f) {
+      const input = $("#ef-" + f.key, expModal);
+      if (input) values[f.key] = input.value.trim();
+    });
+    return values;
+  }
+
+  function saveExpEditor() {
+    const mode = expModalMode;
+    const originalId = expModalOriginalId;
+    const values = readExpForm();
+    let firstBad = null;
+
+    EXP_FIELDS.forEach(function (f) {
+      const input = $("#ef-" + f.key, expModal);
+      if (!input) return;
+      let message = fieldError(f, values[f.key]);
+      if (!message && f.key === "id" && mode === "add" && isIdTaken(values.id)) {
+        message = "Experiment " + values.id + " already exists - choose another ID.";
+      }
+      if (message) {
+        showFieldError(input, message);
+        if (!firstBad) firstBad = input;
+      } else {
+        clearFieldError(input);
+      }
+    });
+
+    if (firstBad) {
+      firstBad.focus();
+      firstBad.scrollIntoView({ block: "nearest" });
+      return;
+    }
+
+    const existing = mode === "edit" ? findExperiment(originalId) : null;
+    const record = existing
+      ? JSON.parse(JSON.stringify(existing))
+      : {
+          id: values.id,
+          name: "",
+          tagline: "",
+          previewVideo: "",
+          youtubeVideo: "",
+          youtubeLink: "",
+          githubLink: "",
+          summary: "",
+          objective: "",
+          output: "",
+          sourcePath: "",
+          module: "",
+          tools: [],
+          custom: true,
+          authored: true,
+          authoredNote: "Added on this site through the Add Experiment form.",
+          sections: [{
+            id: "a",
+            letter: "A",
+            title: "Main code and output",
+            youtubeVideo: "",
+            video: "",
+            code: "",
+            notes: "",
+            outputImage: ""
+          }]
+        };
+
+    record.id = mode === "edit" ? existing.id : values.id;
+    record.name = values.name;
+    record.tagline = values.tagline;
+    record.summary = values.summary;
+    record.objective = values.objective;
+    record.output = values.output;
+    record.sourcePath = values.sourcePath;
+    record.module = values.module;
+    record.tools = values.tools
+      ? values.tools.split(",").map(function (name) { return name.trim(); }).filter(Boolean)
+      : [];
+
+    record.previewVideo = "";
+    record.youtubeVideo = "";
+    if (values.video) {
+      if (youtubeIdOf(values.video)) record.youtubeVideo = values.video;
+      else record.previewVideo = values.video;
+    }
+
+    if (!record.sections || !record.sections.length) {
+      record.sections = [{ id: "a", letter: "A", title: "Main code and output", video: "", youtubeVideo: "", code: "", notes: "", outputImage: "" }];
+    }
+    record.sections[0].code = values.code;
+    delete record.__hay;
+
+    const stored = persistExperiment(record);
+    closeExpEditor();
+    render();
+
+    if (!stored) {
+      toast("Saved for this session only - browser storage is unavailable");
+    } else if (mode === "add") {
+      toast("Experiment " + record.id + " added");
+    } else {
+      toast("Experiment " + record.id + " updated");
+    }
+  }
+
+  /* ---------------------------------------------------------------------
      2. SHARED PARTIALS
      --------------------------------------------------------------------- */
   function studentFieldsHtml() {
@@ -492,7 +1040,7 @@
         '<div class="media">' +
           '<div class="media__ph">' + ICON.video +
             "<strong>Preview video pending</strong>" +
-            "<span>Set <code>previewVideo</code> (or <code>youtubeVideo</code>) in <code>assets/js/data.js</code></span>" +
+            "<span>Use <b>Edit / Update</b> on this page, or set <code>previewVideo</code> (or <code>youtubeVideo</code>) in <code>assets/js/data.js</code></span>" +
           "</div>" +
         "</div>"
       );
@@ -1300,8 +1848,6 @@
   /* ---------------------------------------------------------------------
      PAGE 1 - MAIN LABORATORY PAGE
      --------------------------------------------------------------------- */
-  let addCursor = 0;   // which experiment the "+ ADD" button will open next
-
   function renderHome() {
     const cards = experiments
       .map(function (e, i) {
@@ -1324,8 +1870,6 @@
         );
       })
       .join("");
-
-    const nextExperiment = experiments[addCursor % Math.max(experiments.length, 1)];
 
     return (
       '<div class="page stack">' +
@@ -1356,8 +1900,10 @@
             '<h2 class="exp-head__title">Experiments: <span class="exp-head__count" id="expCount">' +
               plural(experiments.length, "experiment") + "</span></h2>" +
             '<span class="exp-head__spacer"></span>' +
-            '<span class="exp-head__hint" id="addHint"></span>' +
-            '<button class="btn btn--add" id="addBtn" type="button">+ ADD</button>' +
+            '<div class="exp-head__actions">' +
+              '<button class="btn btn--sm btn--ghost" id="restoreExpBtn" type="button">Restore Defaults</button>' +
+              '<button class="btn btn--sm btn--add" id="addBtn" type="button">+ Add Experiment</button>' +
+            "</div>" +
           "</div>" +
           '<div class="exp-grid" id="expGrid">' + (cards || emptyStateHtml()) + "</div>" +
         "</section>" +
@@ -1382,36 +1928,35 @@
     const results = $("#searchResults");
     const wrapper = $("#search");
     const addBtn = $("#addBtn");
-    const addHint = $("#addHint");
+    const restoreBtn = $("#restoreExpBtn");
     let activeIndex = -1;
     let visible = experiments.slice();
 
-    /* ---- "+ ADD" : walks forward through the experiment list ---- */
-    function addTarget() {
-      return experiments[addCursor % Math.max(experiments.length, 1)];
-    }
+    /* ---- "+ Add Experiment" opens a blank form ---- */
+    if (addBtn) addBtn.addEventListener("click", function () { openExpEditor(null, addBtn); });
 
-    function paintAddHint() {
-      const target = addTarget();
-      addHint.innerHTML = target
-        ? "opens <b>Experiment " + target.id + " &middot; " + esc(target.name) + "</b>"
-        : "";
-    }
-
-    addBtn.addEventListener("click", function () {
-      const target = addTarget();
-      if (!target) return;
-      addCursor = (addCursor + 1) % Math.max(experiments.length, 1);
-      paintAddHint();
-      go("#/experiment/" + target.id);
+    /* ---- "Restore Defaults" puts the built-in list back ---- */
+    if (restoreBtn) restoreBtn.addEventListener("click", function () {
+      const store = expStore();
+      const changed = Object.keys(store.edits).length + store.deleted.length;
+      if (!changed) {
+        toast("The built-in experiments already match the default list");
+        return;
+      }
+      confirmDialog({
+        title: "Restore default experiments?",
+        message: "Every change made to the built-in experiments, and every built-in experiment you deleted, will be discarded and replaced with the original list from data.js. Experiments you added are kept.",
+        okLabel: "Restore defaults"
+      }).then(function (ok) {
+        if (!ok) return;
+        const stored = restoreDefaultExperiments();
+        render();
+        toast(stored ? "Default experiments restored" : "Restored for this session only - browser storage is unavailable");
+      });
     });
-    paintAddHint();
 
     /* ---- opening a specific experiment ---- */
     function openExperiment(id) {
-      addCursor = experiments.findIndex(function (e) { return String(e.id) === String(id); });
-      if (addCursor < 0) addCursor = 0;
-      paintAddHint();
       closeList();
       go("#/experiment/" + id);
     }
@@ -1433,7 +1978,7 @@
        those words never appear in its title. */
     function haystack(e) {
       if (e.__hay) return e.__hay;
-      const parts = [e.name, e.tagline, e.summary];
+      const parts = [e.name, e.tagline, e.summary, e.objective, e.output, e.sourcePath, (e.tools || []).join(" ")];
       (e.sections || []).forEach(function (s) {
         parts.push(s.title);
         /* The full source is indexed too so a student can find the part that
@@ -1624,11 +2169,17 @@
               '<span class="chip">' + esc(labMeta.academicYear) + "</span>" +
               '<span class="chip">~' + PREVIEW_SECONDS + "s preview</span>" +
             "</div>" +
+            experimentTagsHtml(experiment) +
+            sourceRefHtml(experiment) +
             '<div>' +
               "<h3 class=\"field-label\"><span class=\"dot\"></span>Parts in this experiment</h3>" +
               '<ul class="mini-list">' + experiment.sections.map(function (s) {
                 return "<li><b>" + esc(s.letter) + "</b><span>" + esc(s.title) + "</span></li>";
               }).join("") + "</ul>" +
+            "</div>" +
+            '<div class="exp-actions">' +
+              '<button class="btn btn--sm" id="editExpBtn" type="button">' + ICON.pencil + " Edit / Update</button>" +
+              '<button class="btn btn--sm btn--danger" id="deleteExpBtn" type="button">Delete</button>' +
             "</div>" +
           "</div>" +
         "</section>" +
@@ -1649,12 +2200,46 @@
     wireAllPreviews(document);
     const btn = $("#overviewBtn");
     if (btn) btn.addEventListener("click", function () { go("#/overview/" + experiment.id); });
+
+    const editBtn = $("#editExpBtn");
+    if (editBtn) {
+      editBtn.addEventListener("click", function () { openExpEditor(experiment, editBtn); });
+    }
+
+    const deleteBtn = $("#deleteExpBtn");
+    if (deleteBtn) {
+      deleteBtn.addEventListener("click", function () {
+        confirmDialog({
+          title: "Delete Experiment " + experiment.id + "?",
+          message: experiment.name + " will be removed from the catalogue, from search and from the module it belongs to. Built-in experiments can be brought back later with Restore Defaults.",
+          okLabel: "Delete experiment",
+          danger: true
+        }).then(function (ok) {
+          if (!ok) return;
+          const stored = removeExperiment(experiment.id);
+          go("#/catalogue");
+          toast(stored ? "Experiment " + experiment.id + " deleted" : "Deleted for this session only - browser storage is unavailable");
+        });
+      });
+    }
   }
 
   /* ---------------------------------------------------------------------
      PAGE 3 - EXPERIMENT OVERVIEW / DETAILS
      --------------------------------------------------------------------- */
   function renderOverview(experiment) {
+    const mod = effectiveModule(experiment);
+    const modRow = mod
+      ? '<div class="idcard__field"><dt>Module</dt><dd>' + esc(mod) + "</dd></div>"
+      : "";
+    const modChip = mod
+      ? '<div class="meta-row"><span class="chip chip--gold">Module ' + esc(mod) + "</span></div>"
+      : "";
+    const toolsChips = (experiment.tools || []).length
+      ? '<div class="meta-row">' + experiment.tools.map(function (name) {
+          return '<span class="chip">' + esc(String(name)) + "</span>";
+        }).join("") + "</div>"
+      : "";
     const parts = experiment.sections
       .map(function (s) {
         return (
@@ -1681,6 +2266,7 @@
             '<h1 class="preview-title"><span class="hl">' + esc(experiment.name) + "</span></h1>" +
             '<p class="sec-sub">' + esc(experiment.tagline || "") + "</p>" +
             authoredNoticeHtml(experiment) +
+            modChip +
             "<div>" +
               '<h3 class="field-label"><span class="dot"></span>Experiment sections &middot; ' +
                 plural(experiment.sections.length, "part") + "</h3>" +
@@ -1693,8 +2279,16 @@
           '<div class="card card--pad">' +
             '<h2 class="field-label"><span class="dot"></span>YouTube video</h2>' +
             youtubeBlockHtml(experiment) +
+            (experiment.objective
+              ? '<h2 class="field-label" style="margin-top:22px"><span class="dot"></span>Objective</h2>' +
+                '<p class="summary">' + esc(experiment.objective) + "</p>"
+              : "") +
             '<h2 class="field-label" style="margin-top:22px"><span class="dot"></span>Summary of Experiment</h2>' +
             '<p class="summary">' + esc(experiment.summary || "Summary pending - set `summary` in assets/js/data.js.") + "</p>" +
+            (experiment.output
+              ? '<h2 class="field-label" style="margin-top:22px"><span class="dot"></span>Output / Result</h2>' +
+                '<p class="summary">' + esc(experiment.output) + "</p>"
+              : "") +
           "</div>" +
 
           '<div class="card card--pad">' +
@@ -1705,11 +2299,16 @@
               "<div class=\"idcard__field\"><dt>Experiment</dt><dd>" + experiment.id + "</dd></div>" +
               "<div class=\"idcard__field\"><dt>Sections</dt><dd>" + plural(experiment.sections.length, "part") + "</dd></div>" +
               "<div class=\"idcard__field\"><dt>Academic Year</dt><dd>" + esc(labMeta.academicYear) + "</dd></div>" +
+              modRow +
             "</dl>" +
-            "<h3 class=\"field-label\"><span class=\"dot\"></span>All sections</h3>" +
+            (toolsChips
+              ? '<h3 class="field-label"><span class="dot"></span>Tools used</h3>' + toolsChips
+              : "") +
+            "<h3 class=\"field-label\" style=\"margin-top:18px\"><span class=\"dot\"></span>All sections</h3>" +
             '<ul class="mini-list">' + experiment.sections.map(function (s) {
               return "<li><b>" + esc(s.letter) + "</b><span>" + esc(s.title) + "</span></li>";
             }).join("") + "</ul>" +
+            (experiment.sourcePath ? '<div style="margin-top:18px">' + sourceRefHtml(experiment) + "</div>" : "") +
           "</div>" +
         "</section>" +
 
@@ -1902,12 +2501,11 @@
      --------------------------------------------------------------------- */
   function renderModules() {
     const cards = modules.map(function (m) {
-      const items = (m.experiments || []).map(function (id) {
-        const exp = findExperiment(id);
-        if (!exp) return "";
+      const list = moduleExperiments(m);
+      const items = list.map(function (exp) {
         return (
-          "<li><b>" + esc(String(id)) + "</b><span>" +
-            '<a href="#/experiment/' + esc(String(id)) + '" data-link>' + esc(exp.name) + "</a>" +
+          "<li><b>" + esc(String(exp.id)) + "</b><span>" +
+            '<a href="#/experiment/' + esc(String(exp.id)) + '" data-link>' + esc(exp.name) + "</a>" +
           "</span></li>"
         );
       }).join("");
@@ -1923,7 +2521,7 @@
           '<div class="module__body" id="module-body-' + num + '" hidden>' +
             '<p class="sec-sub">' + esc(m.description) + "</p>" +
             '<h3 class="field-label"><span class="dot"></span>Experiments in this module &middot; ' +
-              plural((m.experiments || []).length, "experiment") + "</h3>" +
+              plural(list.length, "experiment") + "</h3>" +
             '<ul class="mini-list">' + (items || "<li><span>No experiments mapped yet.</span></li>") + "</ul>" +
           "</div>" +
         "</article>"
@@ -1974,11 +2572,9 @@
      --------------------------------------------------------------------- */
   function renderTools() {
     const cards = tools.map(function (t) {
-      const links = (t.experiments || []).map(function (id) {
-        const exp = findExperiment(id);
-        return exp
-          ? '<a class="chip" href="#/experiment/' + esc(String(id)) + '" data-link>Experiment ' + esc(String(id)) + "</a>"
-          : "";
+      const links = toolExperiments(t).map(function (exp) {
+        return '<a class="chip" href="#/experiment/' + esc(String(exp.id)) + '" data-link>Experiment ' +
+          esc(String(exp.id)) + "</a>";
       }).join("");
       const where = t.where
         ? '<a class="chip chip--accent" href="' + esc(t.whereHref || "#/codelab") + '" data-link>' + esc(t.where) + "</a>"
@@ -2288,6 +2884,7 @@
   window.addEventListener("load", syncTopbarHeight);
 
   restoreStudentCard();
+  rebuildExperiments();
   paintBranding();
   initTheme();
   render();

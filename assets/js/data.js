@@ -65,9 +65,9 @@ var student = {
 var social = {
   githubUrl: "https://github.com/surivishivakumar",
   githubLabel: "surivishivakumar",
-  linkedinUrl: "",                  // paste the full LinkedIn profile URL here
+  linkedinUrl: "https://www.linkedin.com/in/shiva-kumar-surivi-b946b8422/?isSelfProfile=true",
   linkedinLabel: "Shiva kumar Surivi",
-  instagramUrl: "",                 // paste the full Instagram profile URL here
+  instagramUrl: "https://www.instagram.com/its_me_shiva_kumar__/",
   instagramLabel: "",
   email: ""                         // optional, e.g. "you@example.com"
 };
@@ -85,6 +85,14 @@ var social = {
      githubLink     repository URL, shown as a clickable link
      summary        the "Summary of Experiment" paragraph
      sections       A / B / C ... any number of parts, any letters
+
+     Optional fields (leave them out when not needed):
+     objective      what the experiment sets out to show, printed on Overview
+     output         the result the experiment produces, printed on Overview
+     module         module number for an experiment that is not in the syllabus
+     tools          array of library names, matched on the Tools page
+     sourcePath     folder / file this experiment was written in, e.g. Exp5
+     sourceFiles    array of file names inside that folder
 
    Each section supports:
      id          short url-safe key used in the address bar
@@ -274,6 +282,8 @@ var experiments = [
     "youtubeVideo": "",
     "youtubeLink": "",
     "githubLink": "",
+    "sourcePath": "C:\\Users\\suriv\\OneDrive\\Desktop\\DS experiments pra\\Exp5",
+    "sourceFiles": ["exp5a.ipynb"],
     "summary": "This is the largest and most visual experiment, covering the plotting workflow with Matplotlib and Seaborn. It opens with the Iris dataset loaded directly from a remote CSV, followed by `head()`, `info()` and `describe()` to profile it. Five core chart types are then produced: a Matplotlib line plot of sepal and petal length, a Seaborn scatter plot coloured by species, a histogram with a kernel density overlay, a box plot comparing petal length across species, and a Seaborn pair plot of the full feature matrix. A second figure uses `plt.subplots()` to build a two-row annotated layout of monthly sales and expenses and exports it to PNG at 300 DPI. The remaining sections cover grouped and stacked bar plots built directly from a DataFrame with `df.plot()`, a histogram and filled KDE density plot of marks, a scatter plot of study hours against marks with the Pearson correlation coefficient printed, and a box plot of marks grouped by department.",
     "sections": [
       {
