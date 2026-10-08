@@ -78,6 +78,8 @@
     download: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>',
     youtube: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M21.6 7.2c-.2-1.5-.9-2.3-2.4-2.5C17.2 4.4 14.8 4.4 12 4.4s-5.2 0-7.2.3c-1.5.2-2.2 1-2.4 2.5C2.2 9.2 2.2 10.4 2.2 12s0 2.8.2 4.8c.2 1.5.9 2.3 2.4 2.5 2 .3 4.4.3 7.2.3s5.2 0 7.2-.3c1.5-.2 2.2-1 2.4-2.5.2-2 .2-3.2.2-4.8s0-2.8-.2-4.8ZM10.1 14.9V9.1l5.1 2.9-5.1 2.9Z"/></svg>',
     github: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.4 1.1 3 .8.1-.7.3-1.1.6-1.4-2.2-.2-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7 0-.3-.4-1.3.1-2.7 0 0 .9-.3 2.8 1a9.6 9.6 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.8-4.6 5 .3.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2Z"/></svg>',
+    linkedin: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5A2.5 2.5 0 1 0 5 8.5a2.5 2.5 0 0 0 0-5ZM3 9h4v12H3V9Zm7 0h3.8v1.71h.05c.53-1 1.83-2.06 3.76-2.06C21.4 8.65 22 11 22 14.02V21h-4v-6.2c0-1.48-.03-3.39-2.06-3.39-2.07 0-2.39 1.61-2.39 3.28V21h-4V9Z"/></svg>',
+    instagram: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23a3.7 3.7 0 0 1-.9 1.38c-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 0 1-1.38-.9 3.7 3.7 0 0 1-.9-1.38c-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23a3.7 3.7 0 0 1 .9-1.38c.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16Zm0 1.8c-3.15 0-3.5.01-4.74.07-.9.04-1.38.19-1.71.32-.43.17-.74.37-1.06.69-.32.32-.52.63-.69 1.06-.13.32-.28.8-.32 1.71-.06 1.24-.07 1.59-.07 4.74s.01 3.5.07 4.74c.04.9.19 1.38.32 1.71.17.43.37.74.69 1.06.32.32.63.52 1.06.69.32.13.8.28 1.71.32 1.24.06 1.59.07 4.74.07s3.5-.01 4.74-.07c.9-.04 1.38-.19 1.71-.32.43-.17.74-.37 1.06-.69.32-.32.52-.63.69-1.06.13-.32.28-.8.32-1.71.06-1.24.07-1.59.07-4.74s-.01-3.5-.07-4.74c-.04-.9-.19-1.38-.32-1.71a2.86 2.86 0 0 0-.69-1.06 2.86 2.86 0 0 0-1.06-.69c-.32-.13-.8-.28-1.71-.32-1.24-.06-1.59-.07-4.74-.07Zm0 3.07a4.98 4.98 0 1 1 0 9.95 4.98 4.98 0 0 1 0-9.95Zm0 1.8a3.18 3.18 0 1 0 0 6.36 3.18 3.18 0 0 0 0-6.36Zm5.17-3.07a1.16 1.16 0 1 1 0 2.33 1.16 1.16 0 0 1 0-2.33Z"/></svg>',
     external: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-8.5 8.5M18 14v5a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19V7.5A1.5 1.5 0 0 1 5 6h5"/></svg>',
     doc: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a1.8 1.8 0 0 0-1.8 1.8v14.4A1.8 1.8 0 0 0 7 21h10a1.8 1.8 0 0 0 1.8-1.8V7.8L14 3Z"/><path d="M13.8 3v5h5M8.6 12.6h6.8M8.6 16.4h4.8"/></svg>'
   };
@@ -140,7 +142,8 @@
       subjectCode: labMeta.subjectCode,
       academicYear: labMeta.academicYear,
       department: labMeta.department
-    }
+    },
+    social: JSON.parse(JSON.stringify(social))
   };
 
   /* Every editable field of the card, in form order. `group` says which
@@ -161,7 +164,16 @@
     { key: "photo", label: "Photo path / URL", group: "student", req: false, max: 300,
       rx: /^(?:https?:\/\/|assets\/|\.?\.?\/)[^\s]+\.(?:png|jpe?g|webp|gif|avif)$/i,
       rxMsg: "Use an image path or URL ending in .jpg, .png, .webp or .gif.",
-      hint: "Optional. Leave empty for the initials placeholder, for example assets/img/student-photo.jpg" }
+      hint: "Optional. Leave empty for the initials placeholder, for example assets/img/student-photo.jpg" },
+    { key: "email", label: "Email", group: "student", req: false, max: 120,
+      rx: /^(?:$|[^\s@]+@[^\s@]+\.[^\s@]{2,})/, rxMsg: "Enter a valid email address." },
+    { key: "phone", label: "Phone", group: "student", req: false, max: 24 },
+    { key: "githubUrl", label: "GitHub URL", group: "social", req: false, max: 200,
+      rx: /^(?:$|https?:\/\/\S+)/i, rxMsg: "Use a full URL, for example https://github.com/username" },
+    { key: "linkedinUrl", label: "LinkedIn URL", group: "social", req: false, max: 200,
+      rx: /^(?:$|https?:\/\/\S+)/i, rxMsg: "Use a full URL, for example https://www.linkedin.com/in/username" },
+    { key: "instagramUrl", label: "Instagram URL", group: "social", req: false, max: 200,
+      rx: /^(?:$|https?:\/\/\S+)/i, rxMsg: "Use a full URL, for example https://www.instagram.com/username" }
   ];
 
   /* ---- storage ---- */
@@ -179,10 +191,13 @@
   function applyCardData(data) {
     if (!data) return;
     CARD_FIELDS.forEach(function (f) {
-      const src = f.group === "student" ? data.student : data.labMeta;
+      const src = f.group === "student" ? data.student
+                : f.group === "labMeta" ? data.labMeta
+                : data.social;
       if (src && typeof src[f.key] === "string") {
         if (f.group === "student") student[f.key] = src[f.key];
-        else labMeta[f.key] = src[f.key];
+        else if (f.group === "labMeta") labMeta[f.key] = src[f.key];
+        else social[f.key] = src[f.key];
       }
     });
   }
@@ -192,10 +207,11 @@
   }
 
   function writeCardStore() {
-    const data = { v: 1, student: {}, labMeta: {} };
+    const data = { v: 1, student: {}, labMeta: {}, social: {} };
     CARD_FIELDS.forEach(function (f) {
       if (f.group === "student") data.student[f.key] = student[f.key];
-      else data.labMeta[f.key] = labMeta[f.key];
+      else if (f.group === "labMeta") data.labMeta[f.key] = labMeta[f.key];
+      else data.social[f.key] = social[f.key];
     });
     try {
       localStorage.setItem(CARD_STORE_KEY, JSON.stringify(data));
@@ -221,6 +237,7 @@
     const codeNode = $(".univ-card__code b");
     if (codeNode) codeNode.textContent = labMeta.subjectCode;
     paintBranding();
+    paintSocial();
   }
 
   /* ---- modal ---- */
@@ -295,7 +312,9 @@
     CARD_FIELDS.forEach(function (f) {
       const input = $("#cf-" + f.key, cardModal);
       if (!input) return;
-      input.value = String((f.group === "student" ? student[f.key] : labMeta[f.key]) || "");
+      input.value = String((f.group === "student" ? student[f.key]
+                         : f.group === "labMeta" ? labMeta[f.key]
+                         : social[f.key]) || "");
       clearFieldError(input);
     });
   }
@@ -348,7 +367,8 @@
 
     CARD_FIELDS.forEach(function (f) {
       if (f.group === "student") student[f.key] = values[f.key];
-      else labMeta[f.key] = values[f.key];
+      else if (f.group === "labMeta") labMeta[f.key] = values[f.key];
+      else social[f.key] = values[f.key];
     });
     const stored = writeCardStore();
     refreshStudentCardUI();
@@ -359,7 +379,8 @@
   function resetStudentCard() {
     CARD_FIELDS.forEach(function (f) {
       if (f.group === "student") student[f.key] = CARD_DEFAULTS.student[f.key];
-      else labMeta[f.key] = CARD_DEFAULTS.labMeta[f.key];
+      else if (f.group === "labMeta") labMeta[f.key] = CARD_DEFAULTS.labMeta[f.key];
+      else social[f.key] = CARD_DEFAULTS.social[f.key];
     });
     clearCardStore();
     fillCardForm();
@@ -392,13 +413,13 @@
      --------------------------------------------------------------------- */
   function studentFieldsHtml() {
     const rows = [
-      ["Name:", student.name],
-      ["ID Number:", student.idNumber],
-      ["Section:", student.section],
-      ["Branch:", labMeta.department],
-      ["Faculty:", student.faculty],
-      ["Profession:", student.profession]
+      ["Section", student.section],
+      ["Branch", labMeta.department],
+      ["Faculty", student.faculty],
+      ["Profession", student.profession]
     ];
+    if (student.email) rows.push(["Email", student.email]);
+    if (student.phone) rows.push(["Phone", student.phone]);
     return rows
       .map(function (row) {
         return '<div class="idcard__field"><dt>' + esc(row[0]) + "</dt><dd>" + esc(row[1]) + "</dd></div>";
@@ -412,28 +433,25 @@
       : '<div class="idcard__photo-ph">' +
           ICON.person +
           '<span class="idcard__initials">' + esc(initialsOf(student.name)) + "</span>" +
-          "<small>Your photo goes here<br>assets/img/student-photo.jpg</small>" +
         "</div>";
 
-    const social = socialLinksHtml();
+    const social = socialIconsHtml();
 
     return (
       '<aside class="card idcard" id="studentCard">' +
-        '<div class="idcard__strip">' +
-          '<span class="idcard__strip-txt"><b>' + esc(laboratory.name) + "</b></span>" +
+        '<div class="idcard__top">' +
+          '<div class="idcard__photo-wrap">' + photo + "</div>" +
+          '<div class="idcard__identity">' +
+            '<span class="idcard__uni">' + esc(laboratory.name) + "</span>" +
+            '<span class="idcard__name">' + esc(student.name) + "</span>" +
+            '<span class="idcard__roll">' + esc(student.idNumber) + "</span>" +
+            '<span class="idcard__minor">' + esc(student.section) + " &middot; " + esc(labMeta.department) + "</span>" +
+          "</div>" +
         "</div>" +
-        '<div class="idcard__body">' +
-          photo +
-          '<dl class="idcard__fields">' + studentFieldsHtml() + "</dl>" +
-        "</div>" +
-        (social ? '<div class="idcard__social">' + social + "</div>" : "") +
+        '<dl class="idcard__fields">' + studentFieldsHtml() + "</dl>" +
+        '<div class="idcard__social">' + (social || "") + "</div>" +
         '<div class="idcard__foot">' +
           "<span>" + esc(labMeta.subjectCode) + "</span>" +
-          '<span class="idcard__bars" aria-hidden="true">' +
-            [10, 16, 8, 18, 12, 20, 9, 15, 11, 19, 7, 14].map(function (h) {
-              return "<i style=\"height:" + h + "px\"></i>";
-            }).join("") +
-          "</span>" +
           "<span>" + esc(labMeta.academicYear) + "</span>" +
         "</div>" +
         '<div class="idcard__actions">' +
@@ -1894,14 +1912,20 @@
         );
       }).join("");
 
+      const num = esc(String(m.number));
       return (
-        '<article class="card card--pad">' +
-          '<p class="eyebrow">Module ' + esc(String(m.number)) + "</p>" +
+        '<article class="card card--pad module">' +
+          '<p class="eyebrow">Module ' + num + "</p>" +
           '<h2 class="sec-title" style="margin:0">' + esc(m.title) + "</h2>" +
-          '<p class="sec-sub">' + esc(m.description) + "</p>" +
-          '<h3 class="field-label"><span class="dot"></span>Experiments in this module &middot; ' +
-            plural((m.experiments || []).length, "experiment") + "</h3>" +
-          '<ul class="mini-list">' + (items || "<li><span>No experiments mapped yet.</span></li>") + "</ul>" +
+          '<button class="btn btn--sm btn--ghost module__btn" type="button" ' +
+            'data-module-toggle="' + num + '" aria-expanded="false" aria-controls="module-body-' + num + '">' +
+            "View Module</button>" +
+          '<div class="module__body" id="module-body-' + num + '" hidden>' +
+            '<p class="sec-sub">' + esc(m.description) + "</p>" +
+            '<h3 class="field-label"><span class="dot"></span>Experiments in this module &middot; ' +
+              plural((m.experiments || []).length, "experiment") + "</h3>" +
+            '<ul class="mini-list">' + (items || "<li><span>No experiments mapped yet.</span></li>") + "</ul>" +
+          "</div>" +
         "</article>"
       );
     }).join("");
@@ -1925,6 +1949,24 @@
         '<div class="exp-grid">' + cards + "</div>" +
       "</div>"
     );
+  }
+
+  /* Each module card keeps its details collapsed behind a compact
+     "View Module" button; opening one shows that module's description and
+     the experiments mapped to it in data.js. */
+  function wireModules() {
+    const toggles = $$("[data-module-toggle]");
+    toggles.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const body = document.getElementById(btn.getAttribute("aria-controls"));
+        if (!body) return;
+        const open = body.hidden;
+        body.hidden = !open;
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+        btn.textContent = open ? "Hide Module" : "View Module";
+        btn.classList.toggle("is-open", open);
+      });
+    });
   }
 
   /* ---------------------------------------------------------------------
@@ -2035,6 +2077,7 @@
 
       case "modules":
         view.innerHTML = renderModules();
+        wireModules();
         pageTitle = "Modules - " + laboratory.name;
         break;
 
@@ -2164,6 +2207,31 @@
     }
 
     return links.join("");
+  }
+
+  /* Exactly three small circular social icons for the Student Card. A URL
+     left empty renders the icon as an inactive hint instead of a link, so
+     the row always shows GitHub / LinkedIn / Instagram. */
+  function socialIconsHtml() {
+    const cfg = window.social || {};
+    const items = [
+      { key: "githubUrl", label: "GitHub", icon: ICON.github },
+      { key: "linkedinUrl", label: "LinkedIn", icon: ICON.linkedin },
+      { key: "instagramUrl", label: "Instagram", icon: ICON.instagram }
+    ];
+    return items.map(function (i) {
+      const url = cfg[i.key];
+      if (url) {
+        return (
+          '<a class="soc" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer" ' +
+            'aria-label="' + esc(i.label) + '">' + i.icon + "</a>"
+        );
+      }
+      return (
+        '<span class="soc is-empty" title="Add your ' + esc(i.label) +
+          " URL via Edit Student Card" + '" aria-label="' + esc(i.label) + ' (not set)">' + i.icon + "</span>"
+      );
+    }).join("");
   }
 
   function paintSocial() {

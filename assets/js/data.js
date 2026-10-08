@@ -47,23 +47,28 @@ var student = {
   "idNumber": "24102A030120",
   "section": "CSE-DS-2",
   "faculty": "S. Bosu Babu",
-  "profession": "Assistant Professor"
+  "profession": "Assistant Professor",
+  "email": "",
+  "phone": ""
 };
 
 /* -------------------------------------------------------------------------
    2b. SOCIAL / PROFILE LINKS
    -------------------------------------------------------------------------
-   Shown as clickable buttons in the site footer and on the Student Card.
-   Leave a URL as "" to hide that button automatically.
+   Shown as the three small circular icons on the Student Card (and in the
+   site footer). Leave a URL as "" to keep that icon inactive; fill it in
+   from the Edit Student Card dialog to make it a live link.
 
-   linkedinUrl expects the full profile address, for example
-     "https://www.linkedin.com/in/your-handle/"
+   githubUrl / linkedinUrl / instagramUrl expect the full profile address,
+   for example "https://www.linkedin.com/in/your-handle/"
    ------------------------------------------------------------------------- */
 var social = {
   githubUrl: "https://github.com/surivishivakumar",
   githubLabel: "surivishivakumar",
   linkedinUrl: "",                  // paste the full LinkedIn profile URL here
   linkedinLabel: "Shiva kumar Surivi",
+  instagramUrl: "",                 // paste the full Instagram profile URL here
+  instagramLabel: "",
   email: ""                         // optional, e.g. "you@example.com"
 };
 
