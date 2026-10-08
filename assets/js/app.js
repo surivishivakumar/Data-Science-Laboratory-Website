@@ -1987,10 +1987,16 @@
     let pageTitle = laboratory.name;
 
     switch (route.name) {
-      case "home":
+      /* The laboratory's root routes all open the Dashboard/Home page:
+         an empty hash, "#/" (name "home") and "#/dashboard". Anything
+         else falls through to default, which shows the Not Found page. */
       case "":
+      case "home":
+      case "dashboard":
         view.innerHTML = renderHome();
         wireHome();
+        pageTitle = "Home - " + laboratory.name;
+        scrollToBlock("#dashboardTop");
         break;
 
       /* Top-bar navigation targets. These reuse the main page so the
@@ -2008,13 +2014,6 @@
         wireHome();
         pageTitle = "Student Card - " + laboratory.name;
         scrollToBlock("#studentCard");
-        break;
-
-      case "dashboard":
-        view.innerHTML = renderHome();
-        wireHome();
-        pageTitle = "Home - " + laboratory.name;
-        scrollToBlock("#dashboardTop");
         break;
 
       case "codelab": {
