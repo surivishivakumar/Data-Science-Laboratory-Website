@@ -1509,7 +1509,7 @@
           '<span class="chip chip--gold">Python 3.12</span>' +
              '<h1 class="sec-title" style="margin:0">Code Run</h1>' +
           '<span class="exp-head__spacer"></span>' +
-          '<span class="chip chip--accent" data-lab-runtime>Runtimenot loaded</span>' +
+          '<span class="chip chip--accent" data-lab-runtime>Runtime not loaded</span>' +
         "</header>" +
 
         (carry && carry.code
@@ -1714,9 +1714,17 @@
 
     labWorker.onerror = function (ev) {
       labSetRunning(false);
-      labSetStatus("The Python runtime could not start", "error");
-      labAppendOut(ev.message || "Worker error. Check your internet connection on the first run.",
-        "lab-console__line--error");
+      labSetStatus("Python runtime unavailable", "error");
+      labAppendOut(
+        "Python could not start. This page runs Python inside your browser with " +
+        "Pyodide, which is downloaded once from a public CDN - so the very first run " +
+        "needs an internet connection. Check your connection (and any proxy or " +
+        "firewall), then press Run again.\n\n" +
+        "Once the runtime is cached, pandas, numpy, matplotlib and the rest work " +
+        "offline." +
+        ((ev && ev.message) ? "\n\nTechnical detail: " + ev.message : ""),
+        "lab-console__line--error"
+      );
     };
   }
 
@@ -1878,7 +1886,10 @@
           '<div class="card univ-card">' +
             '<h2 class="univ-card__lab">' + esc(laboratory.name) + "</h2>" +
             '<p class="univ-card__code">Subject Code: <b>' + esc(labMeta.subjectCode) + "</b></p>" +
-            '<p class="univ-card__addr">' + esc(laboratory.address) + "</p>" +
+            '<div class="univ-card__meta">' +
+              '<span class="chip chip--accent">' + esc(labMeta.academicYear) + "</span>" +
+              '<span class="chip">' + esc(labMeta.department) + "</span>" +
+            "</div>" +
 
             '<div class="search" id="search">' +
               '<div class="search__box">' +

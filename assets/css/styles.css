@@ -187,28 +187,23 @@ button, input { font: inherit; color: inherit; }
   border-bottom: 1px solid var(--border);
 }
 
-.topbar__brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.topbar__brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+
+.topbar__logo {
+  display: grid; place-items: center; flex: none;
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+}
 
 .topbar__names { display: flex; flex-direction: column; min-width: 0; line-height: 1.24; }
 
 .topbar__lab {
-  display: flex; align-items: center; gap: 7px;
-  font-size: 11.5px; color: var(--text-muted); letter-spacing: 0.9px;
-  text-transform: uppercase;
+  font-size: 15px; font-weight: 700; letter-spacing: -0.2px;
+  color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-
-.topbar__tag {
-  flex: none;
-  font-style: normal;
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 1.1px;
-  padding: 2px 7px;
-  border-radius: 999px;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
 }
 
 /* ---- main navigation: Home / Experiments / Code Run / Modules / Tools ---- */
@@ -492,13 +487,14 @@ button, input { font: inherit; color: inherit; }
 }
 .univ-card__code b { color: var(--text); font-weight: 700; font-family: var(--mono); }
 
-.univ-card__addr {
-  margin: 6px 0 0;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.8px;
-  color: var(--text-dim);
-  line-height: 1.5;
+.univ-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
 }
 
 /* search */
@@ -1369,8 +1365,6 @@ body.cm-open { overflow: hidden; }
   text-transform: uppercase; color: var(--accent);
 }
 .footer__copy { margin: 0; font-size: 13px; color: var(--text-muted); }
-.footer__line { margin: 0; font-size: 12px; color: var(--text-dim); letter-spacing: 0.3px; }
-.footer__line strong { color: var(--text); }
 .footer__meta { margin: 0; font-size: 12.5px; color: var(--text-dim); }
 
 /* --------------------------------------------------------------------------
@@ -1413,12 +1407,6 @@ body.cm-open { overflow: hidden; }
   .code-gutter { width: 46px; }
   .code-line { font-size: 12.4px; }
   .footer__meta { font-size: 11.5px; }
-}
-
-@media (max-width: 620px) {
-  /* too little room for the badge next to the lab name; it still appears on
-     the hero card and in the footer */
-  .topbar__tag { display: none; }
 }
 
 @media (max-width: 520px) {
@@ -2610,11 +2598,9 @@ body.cm-open { overflow: hidden; }
   .btn { padding: 12px 18px; }
 
 /* --- smallest labels up to a readable size --- */
-  .topbar__tag,
   .topbar__lab,
   .ac__meta,
   .footer__meta,
-  .footer__line,
   .idcard__foot,
   .part__label,
   .exp-head__hint,

@@ -25,8 +25,7 @@
    ------------------------------------------------------------------------- */
 var laboratory = {
   name: "Digital Laboratory",
-  tagline: "Digital Laboratory",
-  address: "SREE SAINATH NAGAR, A. RANGAMPETA, TIRUPATI - 517102"
+  tagline: "Digital Laboratory"
 };
 
 var labMeta = {

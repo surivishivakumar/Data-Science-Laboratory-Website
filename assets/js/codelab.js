@@ -993,11 +993,24 @@ self.onmessage = async function (ev) {
           if (err && err.name === "AbortError") {
             throw new Error("The remote run exceeded " + Math.round(WORKER_TIMEOUT_MS / 1000) + " seconds.");
           }
+          /* The request never reached Judge0, or the network blocked it. Say so
+             in plain language and name the exact endpoint, so an offline
+             connection, a dead proxy or a wrong URL is obvious instead of
+             surfacing a raw browser error. */
+          var detail = (err && err.message) ? "\n\nTechnical detail: " + err.message : "";
           throw new Error(
-            "Could not reach the remote compiler at " + base + ".\n\n" +
-            "This language needs internet access and a reachable Judge0 endpoint.\n" +
-            "Python, JavaScript, SQL, HTML and CSS all work offline and do not need it.\n\n" +
-            ((err && err.message) ? err.message : "")
+            "The remote code compiler is unreachable right now.\n\n" +
+            "This site is a folder of static files with no server of its own, so " +
+            "languages that must be compiled (Java, C, C++, Go, Rust and the rest) " +
+            "are sent to an external service called Judge0. That service could not be " +
+            "reached from this browser, so those languages cannot run at the moment.\n\n" +
+            "Endpoint in use: " + base + "\n\n" +
+            "Python, JavaScript, SQL, HTML and CSS are unaffected - they run entirely " +
+            "inside your browser with no network access.\n\n" +
+            "If you manage this site, point it at a reachable Judge0 server in the " +
+            "browser console, then reload:\n" +
+            'localStorage.setItem("dslab.config.v2", JSON.stringify({ judge0Url: "https://judge0.example.ac.in" }));' +
+            detail
           );
         });
     },
