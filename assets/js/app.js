@@ -2522,13 +2522,20 @@
       }).join("");
 
       const num = esc(String(m.number));
+      const openBtn = m.pdf
+        ? '<a class="btn btn--sm btn--primary module__open" href="' + esc(m.pdf) + '" ' +
+            'target="_blank" rel="noopener" aria-label="Open Module ' + num + " PDF: " + esc(m.title) + '">' +
+            "Open" + ICON.external + "</a>"
+        : "";
       return (
         '<article class="card card--pad module">' +
-          '<p class="eyebrow">Module ' + num + "</p>" +
-          '<h2 class="sec-title" style="margin:0">' + esc(m.title) + "</h2>" +
-          '<button class="btn btn--sm btn--ghost module__btn" type="button" ' +
-            'data-module-toggle="' + num + '" aria-expanded="false" aria-controls="module-body-' + num + '">' +
-            "View Module</button>" +
+          '<h2 class="sec-title" style="margin:0">Module ' + num + " \u2014 " + esc(m.title) + "</h2>" +
+          '<div class="module__actions">' +
+            openBtn +
+            '<button class="btn btn--sm btn--ghost module__btn" type="button" ' +
+              'data-module-toggle="' + num + '" aria-expanded="false" aria-controls="module-body-' + num + '">' +
+              "View Module</button>" +
+          "</div>" +
           '<div class="module__body" id="module-body-' + num + '" hidden>' +
             '<p class="sec-sub">' + esc(m.description) + "</p>" +
             '<h3 class="field-label"><span class="dot"></span>Experiments in this module &middot; ' +

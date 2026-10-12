@@ -364,12 +364,15 @@ var experiments = [
    -------------------------------------------------------------------------
    The syllabus of this laboratory is five experiments, so the five modules
    follow the same order as the `experiments` array above. `experiments`
-   lists the experiment ids that belong to the module.
+   lists the experiment ids that belong to the module. `title` is the real
+   chapter title taken from the module document, and `pdf` is its file under
+   assets/pdfs/modules/ opened in the browser PDF viewer from the Modules page.
    ------------------------------------------------------------------------- */
 var modules = [
   {
     number: 1,
-    title: "Data Import and Export",
+    title: "Types of Data Analysis",
+    pdf: "assets/pdfs/modules/module-1-types-of-data-analysis.pdf",
     description:
       "Building a DataFrame from a Python dictionary, inspecting it with head() and shape, " +
       "then persisting it three ways - CSV with to_csv(), JSON with to_json() and an Excel " +
@@ -378,7 +381,8 @@ var modules = [
   },
   {
     number: 2,
-    title: "Web Data, APIs and SQL Integration",
+    title: "Extracting Meaning from Data",
+    pdf: "assets/pdfs/modules/module-2-extracting-meaning-from-data.pdf",
     description:
       "The two ways real data reaches a workflow: calling a REST API with the requests " +
       "library and parsing the JSON payload into a DataFrame, and creating, querying and " +
@@ -387,7 +391,8 @@ var modules = [
   },
   {
     number: 3,
-    title: "Data Cleaning, Transformation and Regular Expressions",
+    title: "Feature Selection and Decision Tree Foundations",
+    pdf: "assets/pdfs/modules/module-3-feature-selection-and-decision-tree-foundations.pdf",
     description:
       "Cleaning messy data before analysis - missing values with isna(), fillna() and " +
       "dropna(), categorical encoding with map() and replace(), outlier detection with the " +
@@ -396,7 +401,8 @@ var modules = [
   },
   {
     number: 4,
-    title: "MultiIndex, Reshaping and Combining DataFrames",
+    title: "Ensemble Learning",
+    pdf: "assets/pdfs/modules/module-4-ensemble-learning.pdf",
     description:
       "Handling data that is more complex than a flat table - hierarchical MultiIndex " +
       "lookups, stack() and unstack() reshaping between wide and long layouts, and merging " +
@@ -405,7 +411,8 @@ var modules = [
   },
   {
     number: 5,
-    title: "Data Visualization with Matplotlib and Seaborn",
+    title: "Dimensionality Reduction",
+    pdf: "assets/pdfs/modules/module-5-dimensionality-reduction.pdf",
     description:
       "The full plotting workflow - line, scatter, histogram, KDE, box, pair, grouped and " +
       "stacked bar charts, annotated multi-panel subplots and PNG export - over the Iris " +

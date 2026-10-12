@@ -1117,8 +1117,11 @@ body.cm-open { overflow: hidden; }
   background: var(--surface-2); border: 1px solid var(--border); color: var(--accent);
 }
 
-/* Modules page: compact "View Module" button that reveals the module's
-   description and its mapped experiments. */
+/* Modules page: an "Open" button that launches the module's PDF in the
+   browser viewer, and a compact "View Module" button that reveals the
+   module's description and its mapped experiments. */
+.module__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.module__actions .module__btn { margin-top: 0; }
 .module__btn { margin-top: 14px; }
 .module__btn.is-open { color: var(--accent); border-color: var(--border-strong); }
 .module__body { margin-top: 4px; animation: pageIn var(--dur) var(--ease) both; }
