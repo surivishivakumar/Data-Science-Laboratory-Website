@@ -53,6 +53,7 @@ Preview videos  (10 second hover preview, shown on the Preview and Overview page
   exp3-preview.mp4     Experiment 3 - Data Cleaning, Transformation and Regex
   exp4-preview.mp4     Experiment 4 - Indexing, Reshaping and Combining Data
   exp5-preview.mp4     Experiment 5 - Data Visualization with Matplotlib
+  exp6-preview.mp4     Experiment 6 - Time Series, Date Ranges and Resampling  (pending)
 
 Section videos   (full recording for each part A / B / C ...)
 --------------------------------------------------------------------------------
@@ -62,8 +63,10 @@ Section videos   (full recording for each part A / B / C ...)
   exp4-a.mp4    exp4-b.mp4    exp4-c.mp4
   exp5-a.mp4    exp5-b.mp4    exp5-bi.mp4   exp5-bii.mp4
   exp5-c.mp4    exp5-d.mp4    exp5-e.mp4
+  exp6-a.mp4    exp6-b.mp4    exp6-c.mp4    exp6-d.mp4   (pending)
 
-  Total: 5 preview videos + 19 section videos = 24 files.
+  Total: 6 preview videos + 23 section videos = 29 slots.
+  Experiments 1-5 are recorded; the Experiment 6 clips are still pending.
 
 If a file is missing, that slot automatically shows a clean
 "video pending" panel instead of a broken player - so the site stays

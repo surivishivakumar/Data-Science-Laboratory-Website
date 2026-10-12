@@ -94,7 +94,7 @@ var experiments = [
 ```
 
 **The number of sections is completely dynamic.** Nothing is hard-coded.
-Right now the five experiments have 3, 2, 4, 3 and 7 parts — add or remove
+Right now the six experiments have 3, 2, 4, 3, 7 and 4 parts — add or remove
 entries freely and the letters, the jump grid, the counters and the prev/next
 pager all adapt automatically.
 
@@ -340,6 +340,7 @@ Full keyboard support: `/` focuses the box, `↑ ↓` move, `Enter` opens,
 | `api`, `sql`, `web` | Experiment 2 |
 | `multiindex`, `reshaping`, `combining` | Experiment 4 |
 | `matplotlib`, `seaborn`, `visualization` | Experiment 5 |
+| `datetime`, `time series`, `resample`, `timezone` | Experiment 6 |
 
 ---
 
@@ -362,7 +363,7 @@ since YouTube cannot autoplay muted on hover.
 
 **If a video file is missing**, that slot shows a neat notice naming the exact
 filename to add instead of a broken player. See `assets/videos/README.txt`
-for the full list of 24 filenames the site is already wired up for.
+for the full list of 29 filenames the site is already wired up for.
 
 ---
 
