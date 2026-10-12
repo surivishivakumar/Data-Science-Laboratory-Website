@@ -1015,6 +1015,11 @@
   function previewVideoHtml(experiment) {
     const src = experiment.previewVideo;
     const ytId = youtubeIdOf(experiment.previewYoutube || experiment.youtubeVideo);
+    const searchUrl = ytSearchUrl(resolveSearchQuery(experiment, null));
+    const caption = videoCaptionHtml({
+      title: experiment.name,
+      desc: experiment.tagline || ("Preview of Experiment " + experiment.id + ".")
+    });
 
     /* YouTube cannot hover-play, mute-autoplay, loop a 15-second window or be
        scrubbed by script without the IFrame API, so when the preview is supplied
@@ -1022,42 +1027,54 @@
        the player on click. Hover preview needs a local .mp4 (previewVideo). */
     if (!src && ytId) {
       return (
-        '<div class="media media--yt">' +
-          '<a class="media__poster" href="https://www.youtube.com/watch?v=' + esc(ytId) + '" ' +
-            'target="_blank" rel="noopener noreferrer" aria-label="Watch the preview on YouTube">' +
-            '<img class="media__poster-img" alt="" loading="lazy" ' +
-              'src="https://i.ytimg.com/vi/' + esc(ytId) + '/hqdefault.jpg">' +
-            '<span class="media__poster-play">' + ICON.youtube + ICON.play + "</span>" +
-            '<span class="badge badge--live">' + ICON.youtube + " YOUTUBE PREVIEW</span>" +
-          "</a>" +
-          '<div class="media__hint">' + ICON.youtube + " Click to watch the preview on YouTube</div>" +
+        '<div class="video-block">' +
+          '<div class="media media--yt">' +
+            '<a class="media__poster" href="https://www.youtube.com/watch?v=' + esc(ytId) + '" ' +
+              'target="_blank" rel="noopener noreferrer" aria-label="Watch the preview on YouTube">' +
+              '<img class="media__poster-img" alt="" loading="lazy" ' +
+                'src="https://i.ytimg.com/vi/' + esc(ytId) + '/hqdefault.jpg">' +
+              '<span class="media__poster-play">' + ICON.youtube + ICON.play + "</span>" +
+              '<span class="badge badge--live">' + ICON.youtube + " YOUTUBE PREVIEW</span>" +
+            "</a>" +
+            '<div class="media__hint">' + ICON.youtube + " Click to watch the preview on YouTube</div>" +
+          "</div>" +
+          caption +
         "</div>"
       );
     }
 
     if (!src) {
       return (
-        '<div class="media">' +
-          '<div class="media__ph">' + ICON.video +
-            "<strong>Preview video pending</strong>" +
-            "<span>Use <b>Edit / Update</b> on this page, or set <code>previewVideo</code> (or <code>youtubeVideo</code>) in <code>assets/js/data.js</code></span>" +
+        '<div class="video-block">' +
+          '<div class="media">' +
+            '<div class="media__ph media__ph--tall">' + ICON.video +
+              "<strong>Preview video not added yet</strong>" +
+              "<span>No recording has been added for this experiment yet. You can still find a matching demonstration on YouTube.</span>" +
+              '<a class="media__cta" href="' + esc(searchUrl) + '" target="_blank" rel="noopener noreferrer">' +
+                ICON.youtube + " Find demonstrations on YouTube" + ICON.external +
+              "</a>" +
+            "</div>" +
           "</div>" +
+          caption +
         "</div>"
       );
     }
 
     return (
-      '<div class="media" data-preview>' +
-        '<video class="media__video" src="' + esc(src) + '" playsinline preload="metadata" ' +
-          'aria-label="Preview of ' + esc(experiment.name) + '"></video>' +
-        '<div class="media__badges">' +
-          '<span class="badge badge--live">' + ICON.play + " " + PREVIEW_SECONDS + "s PREVIEW</span>" +
-          '<span class="badge">Hover to play</span>' +
+      '<div class="video-block">' +
+        '<div class="media" data-preview data-search="' + esc(searchUrl) + '">' +
+          '<video class="media__video" src="' + esc(src) + '" playsinline preload="metadata" ' +
+            'aria-label="Preview of ' + esc(experiment.name) + '"></video>' +
+          '<div class="media__badges">' +
+            '<span class="badge badge--live">' + ICON.play + " " + PREVIEW_SECONDS + "s PREVIEW</span>" +
+            '<span class="badge">Hover to play</span>' +
+          "</div>" +
+          '<button class="media__sound is-muted" type="button" data-sound aria-label="Unmute preview">' +
+            ICON.sound + ICON.soundOff +
+          "</button>" +
+          '<div class="media__hint">' + ICON.play + " Move the mouse over the video to preview</div>" +
         "</div>" +
-        '<button class="media__sound is-muted" type="button" data-sound aria-label="Unmute preview">' +
-          ICON.sound + ICON.soundOff +
-        "</button>" +
-        '<div class="media__hint">' + ICON.play + " Move the mouse over the video to preview</div>" +
+        caption +
       "</div>"
     );
   }
@@ -1066,16 +1083,32 @@
      so the card keeps its shape and badges and works again after a refresh
      once the mp4 has been added. */
   function showMediaFallback(frame, src, tall) {
-    if (frame.querySelector(".media__overlay")) return;
+    if (!frame || frame.querySelector(".media__overlay")) return;
     const video = frame.querySelector("video");
     if (video) video.style.visibility = "hidden";
+
+    /* Prefer a real watch link; otherwise fall back to a topic search so the
+       viewer never reaches a dead end when a recording is missing. */
+    const watchUrl = frame.getAttribute("data-watch") || "";
+    const searchUrl = frame.getAttribute("data-search") || "";
+    const link = watchUrl
+      ? '<a class="media__cta" href="' + esc(watchUrl) + '" target="_blank" rel="noopener noreferrer">' +
+          ICON.youtube + " Watch on YouTube" + ICON.external + "</a>"
+      : (searchUrl
+        ? '<a class="media__cta" href="' + esc(searchUrl) + '" target="_blank" rel="noopener noreferrer">' +
+            ICON.youtube + " Find demonstrations on YouTube" + ICON.external + "</a>"
+        : "");
 
     const overlay = document.createElement("div");
     overlay.className = "media__overlay" + (tall ? " media__ph--tall" : "");
     overlay.innerHTML =
       ICON.video +
-      "<strong>Video file not added yet</strong>" +
-      "<span>Place <code>" + esc(src) + "</code> in the videos folder, then refresh</span>";
+      "<strong>Video not available</strong>" +
+      "<span>" + (src
+        ? "This recording could not be loaded" + (link ? ". You can still watch a demonstration on YouTube." : ".")
+        : "No recording has been added yet" + (link ? ". You can still watch a demonstration on YouTube." : ".")) +
+      "</span>" +
+      link;
     frame.appendChild(overlay);
   }
 
@@ -1155,45 +1188,69 @@
     );
   }
 
-  function sectionVideoHtml(section) {
+  function sectionVideoHtml(section, experiment) {
     const src = section.video;
     const ytId = youtubeIdOf(section.youtubeVideo);
+    const watchUrl = section.youtubeLink || (ytId ? "https://www.youtube.com/watch?v=" + ytId : "");
+    const searchUrl = ytSearchUrl(resolveSearchQuery(experiment, section));
+    const caption = videoCaptionHtml({
+      title: "Part " + section.letter + " - " + section.title,
+      desc: section.videoDescription || defaultVideoDesc(section)
+    });
 
     /* A YouTube link takes priority: the embedded player gives real
        play/pause/scrub/fullscreen, which a linked file also does. */
     if (ytId) {
       return (
-        '<div class="media media--yt">' +
-          '<iframe class="media__embed" src="https://www.youtube-nocookie.com/embed/' + esc(ytId) +
-            '?rel=0" title="Video for section ' + esc(section.letter) + '" ' +
-            'loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; ' +
-            'gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>' +
-          '<div class="media__badges">' +
-            '<span class="badge badge--live">' + ICON.youtube + " YOUTUBE</span>" +
+        '<div class="video-block">' +
+          '<div class="media media--yt" data-watch="' + esc(watchUrl) + '" data-search="' + esc(searchUrl) + '">' +
+            '<iframe class="media__embed" src="https://www.youtube-nocookie.com/embed/' + esc(ytId) +
+              '?rel=0" title="Video for section ' + esc(section.letter) + '" ' +
+              'loading="lazy" referrerpolicy="strict-origin-when-cross-origin" ' +
+              'allow="accelerometer; autoplay; clipboard-write; encrypted-media; ' +
+              'gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>' +
+            '<div class="media__badges">' +
+              '<span class="badge badge--live">' + ICON.youtube + " YOUTUBE</span>" +
+            "</div>" +
+            '<a class="media__watch" href="' + esc(watchUrl) + '" ' +
+              'target="_blank" rel="noopener noreferrer">' + ICON.youtube + " Watch on YouTube</a>" +
           "</div>" +
-          '<a class="media__watch" href="https://www.youtube.com/watch?v=' + esc(ytId) + '" ' +
-            'target="_blank" rel="noopener noreferrer">' + ICON.youtube + " Watch on YouTube</a>" +
+          caption +
         "</div>"
       );
     }
 
     if (!src) {
       return (
-        '<div class="media">' +
-          '<div class="media__ph media__ph--tall">' + ICON.video +
-            "<strong>Section video pending</strong>" +
-            "<span>Set this section's <code>youtubeVideo</code> or <code>video</code> in <code>assets/js/data.js</code></span>" +
+        '<div class="video-block">' +
+          '<div class="media" data-search="' + esc(searchUrl) + '">' +
+            '<div class="media__ph media__ph--tall">' + ICON.video +
+              "<strong>Video not added yet</strong>" +
+              "<span>No recording has been added for Part " + esc(section.letter) + " yet. You can still find a demonstration on YouTube.</span>" +
+              '<a class="media__cta" href="' + esc(searchUrl) + '" target="_blank" rel="noopener noreferrer">' +
+                ICON.youtube + " Find demonstrations on YouTube" + ICON.external +
+              "</a>" +
+            "</div>" +
           "</div>" +
+          caption +
         "</div>"
       );
     }
 
     return (
-      '<div class="media">' +
-        '<video class="media__video media__video--tall" src="' + esc(src) + '" controls playsinline preload="metadata" ' +
-          'aria-label="Video for section ' + esc(section.letter) + '"></video>' +
+      '<div class="video-block">' +
+        '<div class="media" data-watch="' + esc(watchUrl) + '" data-search="' + esc(searchUrl) + '">' +
+          '<video class="media__video" src="' + esc(src) + '" controls playsinline preload="metadata" ' +
+            'aria-label="Video for Part ' + esc(section.letter) + ': ' + esc(section.title) + '"></video>' +
+        "</div>" +
+        caption +
       "</div>"
     );
+  }
+
+  /* Short, honest description of what a part's recording shows. */
+  function defaultVideoDesc(section) {
+    return "Screen recording of Part " + section.letter + " - the Python code running and the output it produces.";
   }
 
   function youtubeIdOf(value) {
@@ -1204,6 +1261,38 @@
     return /^[A-Za-z0-9_-]{6,}$/.test(raw) ? raw : "";
   }
 
+  /* A YouTube search URL built from a plain-text query. Used only when a real
+     recording is missing, so the viewer still reaches relevant material. It is
+     never presented as one of the experiment's own recordings. */
+  function ytSearchUrl(query) {
+    return "https://www.youtube.com/results?search_query=" + encodeURIComponent(String(query || "").trim());
+  }
+
+  /* Which search query to use for a missing recording: a section override, then
+     the experiment override, otherwise a query built from the topic name. */
+  function resolveSearchQuery(experiment, section) {
+    if (section && section.videoSearchQuery) return section.videoSearchQuery;
+    if (experiment && experiment.videoSearchQuery) return experiment.videoSearchQuery;
+    const parts = [];
+    if (experiment && experiment.name) parts.push(experiment.name);
+    if (section && section.title) parts.push(section.title);
+    parts.push("python");
+    return parts.join(" ").trim();
+  }
+
+  /* Title + short description shown under a video player. */
+  function videoCaptionHtml(opts) {
+    const title = String((opts && opts.title) || "").trim();
+    if (!title) return "";
+    const desc = String((opts && opts.desc) || "").trim();
+    return (
+      '<figcaption class="media__caption">' +
+        "<strong>" + esc(title) + "</strong>" +
+        (desc ? "<span>" + esc(desc) + "</span>" : "") +
+      "</figcaption>"
+    );
+  }
+
   function youtubeBlockHtml(experiment) {
     const id = youtubeIdOf(experiment.youtubeVideo);
     const media = id
@@ -1212,7 +1301,9 @@
         '" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>'
       : '<div class="media"><div class="media__ph">' + ICON.youtube +
         "<strong>YouTube video pending</strong>" +
-        "<span>Set <code>youtubeVideo</code> in <code>assets/js/data.js</code></span>" +
+        "<span>No YouTube walkthrough is configured for this experiment. Use the search below to find a matching demonstration.</span>" +
+        '<a class="media__cta" href="' + esc(ytSearchUrl(resolveSearchQuery(experiment, null))) + '" ' +
+          'target="_blank" rel="noopener noreferrer">' + ICON.youtube + " Search YouTube" + ICON.external + "</a>" +
         "</div></div>";
 
     const link = experiment.youtubeLink
@@ -2393,7 +2484,7 @@
 
           /* LEFT : video, then the code block underneath it */
           "<div>" +
-            sectionVideoHtml(section) +
+            sectionVideoHtml(section, experiment) +
             '<div style="margin-top:22px">' +
               '<h2 class="field-label"><span class="dot"></span>Code</h2>' +
               codeViewerHtml(code, fileName) +

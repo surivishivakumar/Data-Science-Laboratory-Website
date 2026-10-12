@@ -361,9 +361,10 @@ var experiments = [
     "id": 6,
     "name": "Time Series, Date Ranges and Resampling",
     "tagline": "Datetime indexes, time zones, calendar periods and resampling with pandas.",
-    "previewVideo": "assets/videos/exp6-preview.mp4",
+    "previewVideo": "",
     "youtubeVideo": "",
     "youtubeLink": "",
+    "videoSearchQuery": "pandas time series to_datetime date_range timezone resample tutorial",
     "githubLink": "",
     "sourcePath": "C:\\Users\\suriv\\OneDrive\\Desktop\\DS experiments pra\\Exp6",
     "sourceFiles": [
@@ -376,7 +377,7 @@ var experiments = [
         "letter": "A",
         "title": "Creating a time series and generating date ranges",
         "youtubeVideo": "",
-        "video": "assets/videos/exp6-a.mp4",
+        "video": "",
         "code": "import pandas as pd\n\ndates = pd.to_datetime([\n    '2001-08-03',\n    '2007-07-02',\n    '2008-03-08',\n    '2016-04-03',\n    '2015-06-02'\n])\ntemperature = [30, 40, 27, 30, 23]\ntime_series = pd.Series(\n    temperature,\n    index=dates\n)\nprint(\"Time Series:\")\nprint(time_series)\n\ndate_index = pd.date_range(\n    start='2027-08-03',\n    periods=7,\n    freq='D'\n)\nprint(\"Generated DatetimeIndex:\")\nprint(date_index)",
         "outputImage": "",
         "notes": "WHAT THIS DOES\nBuilds a pandas Series of temperatures indexed by real\ndates, then generates a fresh DatetimeIndex with date_range.\n\nKEY POINTS\n- pd.to_datetime(list) turns text dates into Timestamps\n- a Series with a DatetimeIndex is a time series\n- pd.date_range(start, periods, freq) builds an index\n- freq='D' means one stamp per day\n- the date index is the axis every later part works on\n\nWATCH OUT\n- frequency codes are case sensitive: 'D' day, 'h' hour,\n  'M' month-end, 'MS' month-start\n- to_datetime guesses the format; pass format= or\n  dayfirst= when the input is ambiguous"
@@ -386,7 +387,7 @@ var experiments = [
         "letter": "B",
         "title": "Time zones: localizing and converting timestamps",
         "youtubeVideo": "",
-        "video": "assets/videos/exp6-b.mp4",
+        "video": "",
         "code": "india_dates = pd.date_range(\n    start='2007-08-03 09:00',\n    periods=3,\n    freq='h',\n    tz='Asia/Kolkata'\n)\nprint(\"1. Date Range with Asia/Kolkata Time Zone:\")\nprint(india_dates)\n\nlocalized_dates = dates.tz_localize('Asia/Kolkata')\n\nprint(\"\\n3. After Localizing to Asia/Kolkata:\")\nprint(localized_dates)\n\nnew_york_dates = localized_dates.tz_convert(\n    'America/New_York'\n)\n\nprint(\"\\n4. Converted to America/New_York:\")\nprint(new_york_dates)",
         "outputImage": "",
         "notes": "WHAT THIS DOES\nMakes a time-zone-aware date range, localizes the part A\nindex to Asia/Kolkata, then converts it to New York time.\n\nKEY POINTS\n- tz='Asia/Kolkata' sets the zone when the range is created\n- tz_localize() attaches a zone to naive timestamps\n- tz_convert() shifts an already-aware index to another zone\n- the instant is preserved; only the wall clock changes\n- India is UTC+5:30, New York is UTC-5 or UTC-4\n\nWATCH OUT\n- tz_localize fails on an index that is already tz-aware;\n  use tz_convert there instead\n- this part reuses dates from part A, so run the parts in order"
@@ -396,7 +397,7 @@ var experiments = [
         "letter": "C",
         "title": "Periods, period ranges and frequency conversion",
         "youtubeVideo": "",
-        "video": "assets/videos/exp6-c.mp4",
+        "video": "",
         "code": "p = pd.Period('2007-08', freq='M')\nprint(\"Original Period:\")\nprint(p)\nprint(\"\\nAfter adding 2:\")\nprint(p + 2)\nprint(\"\\nAfter adding 5:\")\nprint(p + 5)\nprint(\"\\nAfter subtracting 1:\")\nprint(p - 1)\nprint(\"\\nAfter subtracting 3:\")\nprint(p - 3)\nperiods = pd.period_range(\n    start='2026-01',\n    periods=6,\n    freq='M'\n)\nprint(\"\\nRange of Periods:\")\nprint(periods)\n\np = pd.Period('2007-08', freq='M')\nprint(\"Original Period:\")\nprint(p)\ndaily_start = p.asfreq('D', how='start')\nprint(\"\\nMonthly Period converted to Daily (Start):\")\nprint(daily_start)\ndaily_end = p.asfreq('D', how='end')\nprint(\"\\nMonthly Period converted to Daily (End):\")\nprint(daily_end)\nperiod_index = pd.period_range(\n    start='2007-08',\n    periods=3,\n    freq='M'\n)\nprint(\"\\nOriginal PeriodIndex:\")\nprint(period_index)\ndaily_period_index = period_index.asfreq(\n    'D',\n    how='start'\n)\nprint(\"\\nPeriodIndex converted to Daily Frequency:\")\nprint(daily_period_index)\ndaily_period_index_end = period_index.asfreq(\n    'D',\n    how='end'\n)\nprint(\"\\nPeriodIndex converted to Daily Frequency (End):\")\nprint(daily_period_index_end)\n\ndates = pd.to_datetime([\n    '2007-01-8',\n    '2008-04-5',\n    '2009-06-3',\n    '2010-08-2'\n])\nsales = pd.Series(\n    [1000, 1500, 1800, 2200],\n    index=dates\n)\nprint(\"Original Series:\")\nprint(sales)\nperiod_series = sales.to_period('M')\nprint(\"\\nSeries converted to Monthly Periods:\")\nprint(period_series)\ndf = pd.DataFrame(\n    {\n        'Sales': [1000, 1500, 1800, 2200],\n        'Profit': [200, 300, 400, 500]\n    },\n    index=dates\n)\n\nprint(\"\\nOriginal DataFrame:\")\nprint(df)\nperiod_df = df.to_period('M')\nprint(\"\\nDataFrame converted to Monthly Periods:\")\nprint(period_df)",
         "outputImage": "",
         "notes": "WHAT THIS DOES\nWorks with Period objects and a PeriodIndex: arithmetic on a\nmonthly period, then converting calendar frequencies.\n\nKEY POINTS\n- pd.Period('2007-08', freq='M') is a whole month, not an instant\n- adding or subtracting an integer moves whole periods\n- pd.period_range(...) builds a range of periods\n- asfreq('D', how='start'/'end') maps a period to its first/last day\n- Series/DataFrame .to_period('M') stamps each row with its month\n\nWATCH OUT\n- a Period is a calendar span; a Timestamp is a single instant\n- asfreq on a Period needs how='start' or how='end'\n- this part rebuilds dates and sales, so run the parts in order"
@@ -406,7 +407,7 @@ var experiments = [
         "letter": "D",
         "title": "Resampling, downsampling and upsampling",
         "youtubeVideo": "",
-        "video": "assets/videos/exp6-d.mp4",
+        "video": "",
         "code": "dates = pd.date_range(\n    start='2007-08-03 03:00',\n    periods=12,\n    freq='h'\n)\n\nvalues = [10, 12, 15, 14, 18, 20,\n          22, 21, 25, 28, 30, 32]\n\ntime_series = pd.Series(\n    values,\n    index=dates\n)\n\nprint(\"Original Hourly Time Series:\")\nprint(time_series)\n #2. Resampling - calculate 3-hourly mean\nresampled = time_series.resample('3h').mean()\nprint(\"\\nResampled Time Series - 3 Hour Mean:\")\nprint(resampled)\n #3. Downsampling - Hourly to 4-hourly\ndownsampled = time_series.resample('4h').sum()\nprint(\"\\nDownsampled Time Series - 4 Hour Sum:\")\nprint(downsampled)\n #4. Upsampling - Hourly to 30-minute intervals\nupsampled = time_series.resample('30min').asfreq()\nprint(\"\\nUpsampled Time Series - 30 Minute:\")\nprint(upsampled)\n# 5. Upsampling with Forward Fill\nupsampled_ffill = time_series.resample('30min').ffill()\nprint(\"\\nUpsampled Time Series using Forward Fill:\")\nprint(upsampled_ffill)",
         "outputImage": "",
         "notes": "WHAT THIS DOES\nTakes an hourly time series and changes its frequency:\n3-hourly mean, 4-hourly sum, then 30-minute upsampling with\nasfreq() and again with forward fill.\n\nKEY POINTS\n- resample('3h').mean() groups 3 hours into one averaged row\n- downsampling reduces rows; upsampling adds empty ones\n- resample('4h').sum() adds the values in each 4-hour window\n- asfreq('30min') inserts NaN where no original sample exists\n- ffill() carries the last known value forward instead of NaN\n\nWATCH OUT\n- downsampling must pick an aggregator (mean, sum, max ...)\n- upsampling introduces NaN unless you fill them\n- ffill() invents data between samples; use it only when that holds"
