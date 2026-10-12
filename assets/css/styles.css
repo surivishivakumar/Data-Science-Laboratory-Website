@@ -1097,8 +1097,21 @@ body.cm-open { overflow: hidden; }
 .media__overlay svg { color: var(--text-dim); }
 .media__badges, .media__hint, .media__sound { z-index: 1; }
 
-/* Wrapper so a player can carry a title + description underneath it. */
-.video-block { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+/* Wrapper so a player can carry a title + description underneath it.
+   The player is narrowed to ~73% of its column and centred; the inner frame
+   fills that width (16/9 is kept by .media__video) so the caption stays
+   aligned with the video. The page itself, not this rule, supplies margins. */
+.video-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  width: 73%;
+  max-width: 800px;
+  margin-inline: auto;
+}
+.video-block .media,
+.video-block .media__embed { max-width: 100%; }
 
 .media__caption { display: flex; flex-direction: column; gap: 4px; padding: 0 2px; }
 .media__caption strong { color: var(--text); font-size: 14.5px; font-weight: 650; line-height: 1.3; }
@@ -1435,6 +1448,10 @@ body.cm-open { overflow: hidden; }
   .code-gutter { width: 46px; }
   .code-line { font-size: 12.4px; }
   .footer__meta { font-size: 11.5px; }
+
+  /* Phones: the player uses the full column width; the page container already
+     provides the side margins, so the video stays responsive and readable. */
+  .video-block { width: 100%; max-width: 100%; }
 }
 
 @media (max-width: 520px) {
