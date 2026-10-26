@@ -413,6 +413,59 @@ var experiments = [
         "notes": "WHAT THIS DOES\nTakes an hourly time series and changes its frequency:\n3-hourly mean, 4-hourly sum, then 30-minute upsampling with\nasfreq() and again with forward fill.\n\nKEY POINTS\n- resample('3h').mean() groups 3 hours into one averaged row\n- downsampling reduces rows; upsampling adds empty ones\n- resample('4h').sum() adds the values in each 4-hour window\n- asfreq('30min') inserts NaN where no original sample exists\n- ffill() carries the last known value forward instead of NaN\n\nWATCH OUT\n- downsampling must pick an aggregator (mean, sum, max ...)\n- upsampling introduces NaN unless you fill them\n- ffill() invents data between samples; use it only when that holds"
       }
     ]
+  },
+  {
+    "id": 7,
+    "name": "GroupBy Operations and Data Aggregation",
+    "tagline": "Grouping data by one or more columns and aggregating summary statistics with pandas.",
+    "previewVideo": "",
+    "youtubeVideo": "",
+    "youtubeLink": "",
+    "videoSearchQuery": "pandas groupby aggregation multiple columns tutorial",
+    "githubLink": "",
+    "sourcePath": "C:\\Users\\suriv\\OneDrive\\Desktop\\DS experiments pra\\Exp7",
+    "sourceFiles": [
+      "Exp7.ipynb"
+    ],
+    "tools": [
+      "Python",
+      "pandas"
+    ],
+    "objective": "To demonstrate pandas GroupBy operations: splitting a DataFrame by one or more columns, iterating over the resulting groups, and aggregating values with mean(), sum(), std() and agg() to produce per-group summary statistics.",
+    "summary": "Part A builds a student DataFrame and groups it first by Department and then by Department together with Year, printing every group and the mean marks for each key. Part B uses groupby().aggregate() with a dictionary of functions to compute the sum, mean and standard deviation of Marks and Attendance for each department in one call. Part C applies the same GroupBy workflow to the 150-row Iris dataset loaded from a remote CSV: grouping by species, grouping by species and sepal width, producing a multi-level summary table, counting records per species and calculating average petal length, average petal width and maximum sepal length. The three parts show how a single grouping key, multiple keys and multiple aggregation functions change the shape and detail of the summary.",
+    "output": "Verified against the supplied notebook and a local run of all three cells. Part A: average marks by department are CSE 86.25 and ECE 79.50; grouping by department and year gives CSE year 2 = 83.333333, CSE year 3 = 95.0, ECE year 2 = 70.0 and ECE year 3 = 82.666667. Part B: Marks sums/means are CSE 240/80.0, ECE 210/70.0 and EEE 270/90.0, with Attendance means 90.0, 80.0 and 95.0. Part C: sepal length means are setosa 5.006, versicolor 5.936 and virginica 6.588; petal length means are 1.462, 4.260 and 5.552.",
+    "sections": [
+      {
+        "id": "a",
+        "letter": "A",
+        "title": "Grouping by Department and by Department + Year",
+        "youtubeVideo": "",
+        "video": "",
+        "code": "import pandas as pd\n\ndata = {\n    'Name': ['Ravi', 'Sita', 'Arun', 'Priya', 'Kiran', 'Anil', 'Lakshmi', 'Rahul'],\n    'Department': ['CSE', 'CSE', 'ECE', 'ECE', 'CSE', 'ECE', 'CSE', 'ECE'],\n    'Year': [2, 2, 3, 3, 2, 3, 3, 2],\n    'Marks': [85, 90, 78, 88, 75, 82, 95, 70]\n}\n\ndf = pd.DataFrame(data)\n\nprint(\"Original DataFrame:\")\nprint(df)\n\nprint(\"\\n1. Group by Department:\")\n\ngroup1 = df.groupby('Department')\n\nfor name, group in group1:\n    print(\"\\nDepartment:\", name)\n    print(group)\n\nprint(\"\\nAverage Marks by Department:\")\nprint(df.groupby('Department')['Marks'].mean())\n\nprint(\"\\n2. Group by Department and Year:\")\n\ngroup2 = df.groupby(['Department', 'Year'])\n\nfor name, group in group2:\n    print(\"\\nGroup:\", name)\n    print(group)\n\nprint(\"\\nAverage Marks by Department and Year:\")\nprint(df.groupby(['Department', 'Year'])['Marks'].mean())",
+        "notes": "WHAT THIS DOES\nBuilds an 8-row student DataFrame, prints it, splits it\ninto groups with df.groupby('Department'), then groups\nby the pair of columns Department and Year.\n\nKEY POINTS\n- groupby('Department') creates one group per department\n- iterating over a GroupBy yields (name, group) pairs\n- groupby(['Department', 'Year']) uses a tuple as the key\n- ['Marks'].mean() aggregates one column for every group\n- CSE averages 86.25 and ECE averages 79.50\n\nEXPECTED OUTPUT (verified)\nDepartment means: CSE 86.25, ECE 79.50\nDepartment + Year means: CSE year 2 = 83.333333,\nCSE year 3 = 95.0, ECE year 2 = 70.0,\nECE year 3 = 82.666667",
+        "outputImage": ""
+      },
+      {
+        "id": "b",
+        "letter": "B",
+        "title": "Aggregating Marks and Attendance by Department",
+        "youtubeVideo": "",
+        "video": "",
+        "code": "import pandas as pd\n\ndata = {\n    'Department': ['CSE', 'CSE', 'CSE', 'ECE', 'ECE', 'ECE',\n                   'EEE', 'EEE', 'EEE'],\n    'Marks': [80, 75, 85, 70, 65, 75, 90, 85, 95],\n    'Attendance': [90, 85, 95, 80, 75, 85, 95, 90, 100]\n}\n\ndf = pd.DataFrame(data)\n\nprint(\"Original DataFrame:\")\nprint(df)\n\nresult = df.groupby('Department').aggregate({\n    'Marks': ['sum', 'mean', 'std'],\n    'Attendance': ['sum', 'mean', 'std']\n})\n\nprint(\"\\nSummary Statistics:\")\nprint(result)",
+        "notes": "WHAT THIS DOES\nGroups nine students by department and asks for three\nstatistics (sum, mean, std) on both Marks and Attendance\nin a single aggregate() call.\n\nKEY POINTS\n- aggregate({...}) takes a dict of column -> function list\n- the result gets two column levels: Marks/Attendance,\n  then sum/mean/std\n- CSE: Marks sum 240, mean 80.0, std 5.0\n- ECE: Marks sum 210, mean 70.0, std 5.0\n- EEE: Marks sum 270, mean 90.0, std 5.0\n\nEXPECTED OUTPUT (verified)\nAttendance means: CSE 90.0, ECE 80.0, EEE 95.0",
+        "outputImage": ""
+      },
+      {
+        "id": "c",
+        "letter": "C",
+        "title": "GroupBy on the Iris dataset with one and two keys",
+        "youtubeVideo": "",
+        "video": "",
+        "code": "import pandas as pd\n\nurl = \"https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv\"\ndf = pd.read_csv(url)\n\nprint(\"First 5 Records:\")\nprint(df.head())\n\nprint(\"\\nDataset Information:\")\nprint(df.info())\n\nprint(\"\\nStatistical Summary:\")\nprint(df.describe())\n\nprint(\"\\n1. GroupBy using a Single Column:\")\ngroup_single = df.groupby('species')['sepal_length'].agg(\n    ['count', 'sum', 'mean', 'std', 'min', 'max']\n)\nprint(group_single)\n\nprint(\"\\n2. GroupBy using Multiple Columns:\")\ngroup_multiple = df.groupby(\n    ['species', 'sepal_width']\n)['sepal_length'].mean()\nprint(group_multiple.head(15))\n\nprint(\"\\n3. Summary Statistics:\")\nsummary = df.groupby('species').agg({\n    'sepal_length': ['mean', 'std', 'min', 'max'],\n    'sepal_width': ['mean', 'std', 'min', 'max'],\n    'petal_length': ['mean', 'std', 'min', 'max'],\n    'petal_width': ['mean', 'std', 'min', 'max']\n})\n\nprint(summary)\n\nprint(\"\\n4. Number of Records in Each Species:\")\nprint(df['species'].value_counts())\n\nprint(\"\\nAverage Petal Length by Species:\")\nprint(df.groupby('species')['petal_length'].mean())\n\nprint(\"\\nAverage Petal Width by Species:\")\nprint(df.groupby('species')['petal_width'].mean())\n\nprint(\"\\nMaximum Sepal Length by Species:\")\nprint(df.groupby('species')['sepal_length'].max())",
+        "notes": "WHAT THIS DOES\nLoads the Iris dataset from the seaborn-data CSV, profiles\nit, then applies GroupBy with one key, two keys and\nseveral aggregations.\n\nKEY POINTS\n- read_csv(url) loads the 150-row Iris dataset\n- groupby('species')['sepal_length'].agg([...]) gives\n  count, sum, mean, std, min and max\n- groupby(['species', 'sepal_width']) groups on two columns\n- agg({...}) produces a multi-level summary table\n- value_counts() counts 50 records in each species\n\nEXPECTED OUTPUT (verified)\nSepal length means: setosa 5.006, versicolor 5.936,\nvirginica 6.588\nPetal length means: setosa 1.462, versicolor 4.260,\nvirginica 5.552\nThis part downloads iris.csv from the internet when run.",
+        "outputImage": ""
+      }
+    ]
   }
 ];
 
@@ -499,14 +552,14 @@ var tools = [
     name: "Python",
     definition: "The general-purpose programming language every experiment is written in.",
     use: "All experiment source is plain Python; the Code Run page executes it in the browser.",
-    experiments: [1, 2, 3, 4, 5, 6]
+    experiments: [1, 2, 3, 4, 5, 6, 7]
   },
   {
     kind: "Library",
     name: "Pandas",
     definition: "The DataFrame library for tabular data in Python.",
-    use: "Creates, inspects, exports, cleans, reshapes and merges the data in every experiment.",
-    experiments: [1, 2, 3, 4, 5, 6]
+    use: "Creates, inspects, exports, cleans, reshapes, merges and groups the data in every experiment.",
+    experiments: [1, 2, 3, 4, 5, 6, 7]
   },
   {
     kind: "Library",

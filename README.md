@@ -94,7 +94,7 @@ var experiments = [
 ```
 
 **The number of sections is completely dynamic.** Nothing is hard-coded.
-Right now the six experiments have 3, 2, 4, 3, 7 and 4 parts — add or remove
+Right now the seven experiments have 3, 2, 4, 3, 7, 4 and 3 parts — add or remove
 entries freely and the letters, the jump grid, the counters and the prev/next
 pager all adapt automatically.
 
