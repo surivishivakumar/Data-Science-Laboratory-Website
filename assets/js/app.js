@@ -2122,7 +2122,7 @@
                 '<span class="chip chip--accent">' + esc(labMeta.subjectCode) + "</span>" +
               "</div>" +
               '<h1 class="univ-card__lab univ-card__lab--hero">' + esc(laboratory.name) + "</h1>" +
-              '<p class="univ-card__desc">An interactive data science laboratory platform with hands-on experiments, real-time code execution, and comprehensive learning resources designed for academic excellence.</p>" +
+              '<p class="univ-card__desc">An interactive data science laboratory platform with hands-on experiments, real-time code execution, and comprehensive learning resources designed for academic excellence.</p>' +
               '<div class="univ-card__actions">' +
                 '<a class="btn btn--primary" href="#/catalogue" data-link>' + ICON.play + " Explore Experiments</a>" +
                 '<a class="btn btn--ghost" href="#/codelab" data-link>' + ICON.code + " Open Code Run</a>" +
@@ -2164,7 +2164,7 @@
                 '<div class="quick-card__icon">' + ICON.flask + "</div>" +
                 '<div class="quick-card__content">' +
                   '<div class="quick-card__title">Experiments</div>' +
-                  '<div class="quick-card__desc">' + experiments.length + " hands-on labs</div>' +
+                  '<div class="quick-card__desc">' + experiments.length + ' hands-on labs</div>' +
                 "</div>" +
               "</a>" +
               '<a class="quick-card" href="#/codelab" data-link>' +
