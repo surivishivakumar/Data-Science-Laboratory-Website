@@ -2973,22 +2973,28 @@
      PAGE - PROJECTS  (capstone / case-study projects)
      --------------------------------------------------------------------- */
   function renderProjects() {
-    const cards = projects.map(function (p) {
-      const techs = p.technologies.map(function (t) {
-        return '<span class="chip">' + esc(t) + "</span>";
-      }).join("");
-      return (
-        '<article class="card card--pad project-card">' +
-          '<p class="eyebrow">' + esc(p.category) + " &middot; " + esc(p.status) + "</p>" +
-          '<h2 class="sec-title" style="margin:0">' + esc(p.title) + "</h2>" +
-          '<p class="sec-sub">' + esc(p.description) + "</p>" +
-          '<div class="meta-row" style="margin:14px 0 0">' + techs + "</div>" +
-          '<div class="module__actions" style="margin-top:16px">' +
-            '<a class="btn btn--sm btn--primary" href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer">' + ICON.external + " Open Project</a>" +
-          "</div>" +
-        "</article>"
-      );
-    }).join("");
+    const cards = projects.length
+      ? projects.map(function (p) {
+          const techs = p.technologies.map(function (t) {
+            return '<span class="chip">' + esc(t) + "</span>";
+          }).join("");
+          return (
+            '<article class="card card--pad project-card">' +
+              '<p class="eyebrow">' + esc(p.category) + " &middot; " + esc(p.status) + "</p>" +
+              '<h2 class="sec-title" style="margin:0">' + esc(p.title) + "</h2>" +
+              '<p class="sec-sub">' + esc(p.description) + "</p>" +
+              '<div class="meta-row" style="margin:14px 0 0">' + techs + "</div>" +
+              '<div class="module__actions" style="margin-top:16px">' +
+                '<a class="btn btn--sm btn--primary" href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer">' + ICON.external + " Open Project</a>" +
+              "</div>" +
+            "</article>"
+          );
+        }).join("")
+      : '<div class="empty-state">' +
+        ICON.layers +
+        "<h3>No projects</h3>" +
+        '<p class="muted">The Projects page is currently empty. Experiments are available on the Experiments page.</p>' +
+      "</div>";
 
     return (
       '<div class="page stack">' +
@@ -2997,7 +3003,7 @@
         '<section class="card card--pad">' +
           '<p class="eyebrow">' + esc(laboratory.name) + "</p>" +
           '<h1 class="preview-title"><span class="hl">Projects</span></h1>' +
-          '<p class="sec-sub">Completed data-science and programming projects. Each links to its real source repository &mdash; nothing is simulated or invented.</p>' +
+          '<p class="sec-sub">Completed data-science and programming projects.</p>' +
         "</section>" +
 
         '<div class="exp-grid">' + cards + "</div>" +

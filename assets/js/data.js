@@ -787,27 +787,11 @@ var resources = [
 /* -------------------------------------------------------------------------
    7. PROJECTS  (capstone / case-study projects)
    -------------------------------------------------------------------------
-   Real, completed data-science projects. Only projects with a verifiable
-   source link are listed; nothing is invented.
+   Projects removed per request. No projects are displayed on the Projects
+   page. The experiments catalogue (10 experiments) remains available via
+   the Experiments page.
    ------------------------------------------------------------------------- */
-var projects = [
-  {
-    title: "Customer Personality Analysis",
-    description: "Customer segmentation using K-Means clustering with the Elbow Method and Silhouette Score, plus targeted marketing strategies.",
-    category: "Machine Learning",
-    technologies: ["Python", "pandas", "scikit-learn", "Matplotlib", "Seaborn"],
-    status: "Completed",
-    url: "https://github.com/jaisimha16"
-  },
-  {
-    title: "Text Emotion Detection",
-    description: "Emotion detection in short text using a Naive Bayes classifier trained with CountVectorizer, mapped to emojis.",
-    category: "Machine Learning",
-    technologies: ["Python", "scikit-learn"],
-    status: "Completed",
-    url: "https://github.com/jaisimha16"
-  }
-];
+var projects = [];
 
 /* Make the array available to the app, both in the browser and in Node tests. */
 if (typeof module !== "undefined" && module.exports) {
