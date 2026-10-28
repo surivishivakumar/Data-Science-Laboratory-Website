@@ -7,25 +7,25 @@
    1. TOKENS - Professional Cyan/Sky Blue Theme
    -------------------------------------------------------------------------- */
 :root {
-  --bg-0: #060a14;
-  --bg-1: #0a1526;
-  --bg-2: #0f1a2e;
+  --bg-0: #05070a;
+  --bg-1: #0a0f1a;
+  --bg-2: #0f1726;
 
-  --surface: rgba(56, 189, 248, 0.06);
-  --surface-2: rgba(56, 189, 248, 0.09);
-  --surface-solid: #0f1a2e;
-  --border: rgba(56, 189, 248, 0.18);
-  --border-strong: rgba(56, 189, 248, 0.38);
+  --surface: rgba(139, 92, 246, 0.05);
+  --surface-2: rgba(139, 92, 246, 0.08);
+  --surface-solid: #0f1726;
+  --border: rgba(139, 92, 246, 0.16);
+  --border-strong: rgba(139, 92, 246, 0.35);
 
   --text: #e6f1ff;
-  --text-muted: #a5c4e6;
-  --text-dim: #7b9bc3;
+  --text-muted: #a5b4d6;
+  --text-dim: #7b8cb8;
 
   --accent: #22d3ee;
-  --accent-2: #38bdf8;
+  --accent-2: #8b5cf6;
   --accent-3: #06b6d4;
   --gold: #f59e0b;
-  --grad-brand: linear-gradient(120deg, #22d3ee 0%, #38bdf8 50%, #06b6d4 100%);
+  --grad-brand: linear-gradient(135deg, #8b5cf6 0%, #22d3ee 45%, #06b6d4 100%);
   --grad-gold: linear-gradient(120deg, #f59e0b, #d97706);
 
   --yt: #ff4d4f;
@@ -39,10 +39,10 @@
   --r-lg: 16px;
   --r-xl: 20px;
 
-  --shadow-sm: 0 2px 8px rgba(6, 182, 212, 0.12);
-  --shadow-md: 0 12px 32px -12px rgba(6, 182, 212, 0.25);
-  --shadow-lg: 0 24px 64px -24px rgba(6, 182, 212, 0.35);
-  --glow: 0 0 0 1px rgba(34, 211, 238, 0.4), 0 16px 40px -18px rgba(34, 211, 238, 0.5);
+  --shadow-sm: 0 2px 8px rgba(6, 182, 212, 0.1);
+  --shadow-md: 0 12px 32px -12px rgba(6, 182, 212, 0.18);
+  --shadow-lg: 0 24px 64px -24px rgba(6, 182, 212, 0.28);
+  --glow: 0 0 0 1px rgba(34, 211, 238, 0.35), 0 16px 40px -18px rgba(139, 92, 246, 0.45);
 
   --font: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --mono: "JetBrains Mono", "Cascadia Code", "Consolas", "SFMono-Regular", ui-monospace, Menlo, monospace;
@@ -60,23 +60,23 @@
   --surface: #ffffff;
   --surface-2: #f1f9ff;
   --surface-solid: #ffffff;
-  --border: rgba(6, 182, 212, 0.2);
-  --border-strong: rgba(6, 182, 212, 0.4);
+  --border: rgba(139, 92, 246, 0.18);
+  --border-strong: rgba(139, 92, 246, 0.35);
 
-  --text: #0c4a6e;
-  --text-muted: #0369a1;
-  --text-dim: #075985;
+  --text: #0f172a;
+  --text-muted: #475569;
+  --text-dim: #64748b;
 
   --accent: #0891b2;
-  --accent-2: #0284c7;
+  --accent-2: #7c3aed;
   --accent-3: #06b6d4;
   --gold: #d97706;
-  --gh: #0c4a6e;
+  --gh: #0f172a;
 
   --shadow-sm: 0 1px 3px rgba(6, 182, 212, 0.08);
-  --shadow-md: 0 8px 24px -8px rgba(6, 182, 212, 0.18);
-  --shadow-lg: 0 20px 48px -20px rgba(6, 182, 212, 0.28);
-  --glow: 0 0 0 1px rgba(8, 145, 178, 0.35), 0 12px 32px -16px rgba(8, 145, 178, 0.45);
+  --shadow-md: 0 8px 24px -8px rgba(6, 182, 212, 0.14);
+  --shadow-lg: 0 20px 48px -20px rgba(6, 182, 212, 0.22);
+  --glow: 0 0 0 1px rgba(8, 145, 178, 0.3), 0 12px 32px -16px rgba(124, 58, 237, 0.35);
 }
 
 [data-theme="light"] .grid-lines { opacity: 0.35; }
@@ -145,25 +145,25 @@ button, input { font: inherit; color: inherit; }
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(1100px 620px at 12% -8%, rgba(45, 212, 191, 0.14), transparent 60%),
-    radial-gradient(900px 560px at 92% 4%, rgba(129, 140, 248, 0.16), transparent 62%),
-    radial-gradient(760px 520px at 50% 108%, rgba(56, 189, 248, 0.11), transparent 62%),
+    radial-gradient(1100px 620px at 12% -8%, rgba(139, 92, 246, 0.14), transparent 60%),
+    radial-gradient(900px 560px at 92% 4%, rgba(34, 211, 238, 0.14), transparent 62%),
+    radial-gradient(760px 520px at 50% 108%, rgba(6, 182, 212, 0.1), transparent 62%),
     linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 46%, var(--bg-0) 100%);
 }
 
 .orb { position: absolute; border-radius: 50%; filter: blur(72px); opacity: 0.42; }
-.orb-a { width: 340px; height: 340px; top: -80px; left: -60px; background: #0e7490; }
-.orb-b { width: 300px; height: 300px; top: 30%; right: -70px; background: #4338ca; }
+.orb-a { width: 340px; height: 340px; top: -80px; left: -60px; background: #8b5cf6; }
+.orb-b { width: 300px; height: 300px; top: 30%; right: -70px; background: #22d3ee; }
 
 [data-theme="light"] .orb { opacity: 0.2; }
 
 .grid-lines {
   position: absolute;
   inset: 0;
-  opacity: 0.5;
+  opacity: 0.45;
   background-image:
-    linear-gradient(rgba(148, 178, 226, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 178, 226, 0.055) 1px, transparent 1px);
+    linear-gradient(rgba(139, 92, 246, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 246, 0.06) 1px, transparent 1px);
   background-size: 46px 46px;
   mask-image: radial-gradient(circle at 50% 24%, #000 0%, transparent 78%);
   -webkit-mask-image: radial-gradient(circle at 50% 24%, #000 0%, transparent 78%);
@@ -443,12 +443,6 @@ button, input { font: inherit; color: inherit; }
 /* --------------------------------------------------------------------------
    6. PAGE 1 - HERO + STUDENT ID CARD
    -------------------------------------------------------------------------- */
-.lab-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.62fr) minmax(300px, 0.95fr);
-  gap: clamp(16px, 2.4vw, 24px);
-  align-items: start;
-}
 
 .univ-card {
   display: flex;
@@ -495,6 +489,149 @@ button, input { font: inherit; color: inherit; }
   margin: 14px 0 0;
   padding-top: 14px;
   border-top: 1px solid var(--border);
+}
+
+/* ---- Hero layout & animations (PAGE 1) ---- */
+.lab-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 1fr);
+  gap: clamp(16px, 2.4vw, 26px);
+  align-items: start;
+}
+
+.hero-side {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2vw, 20px);
+  align-items: flex-start;
+}
+.hero-side .idcard { width: 100%; max-width: 380px; }
+
+.hero-visual {
+  position: relative;
+  width: 100%;
+  max-width: 330px;
+  height: 260px;
+  display: grid;
+  place-items: center;
+}
+.hero-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  opacity: 0.55;
+  z-index: 0;
+  animation: glowPulse 6s ease-in-out infinite;
+}
+.hero-glow--a {
+  width: 260px;
+  height: 260px;
+  top: -60px;
+  left: -40px;
+  background: #8b5cf6;
+  animation-delay: 0s;
+}
+.hero-glow--b {
+  width: 220px;
+  height: 220px;
+  bottom: -40px;
+  right: -30px;
+  background: #22d3ee;
+  animation-delay: 2s;
+}
+.hero-glow--c {
+  width: 180px;
+  height: 180px;
+  top: 40%;
+  right: -20px;
+  background: #06b6d4;
+  animation-delay: 4s;
+}
+
+.atom {
+  position: relative;
+  width: 230px;
+  height: 230px;
+  z-index: 2;
+}
+.atom__nucleus {
+  position: absolute;
+  inset: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  box-shadow: 0 0 22px var(--accent-2);
+  transform: translate(-50%, -50%);
+  z-index: 3;
+}
+.atom__orbit {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.atom__orbit--a { animation: spin 22s linear infinite; }
+.atom__orbit--b {
+  animation: spin 16s linear infinite reverse;
+  width: 72%;
+  height: 72%;
+  top: 14%;
+  left: 14%;
+  border-color: color-mix(in srgb, var(--accent-3) 28%, transparent);
+}
+.atom__orbit--c {
+  animation: spin 28s linear infinite;
+  width: 48%;
+  height: 48%;
+  top: 26%;
+  left: 26%;
+  border-color: color-mix(in srgb, var(--accent-2) 28%, transparent);
+}
+.atom__electron {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  transform: translate(-50%, -50%);
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--text-muted);
+  opacity: 0.6;
+  z-index: 1;
+  animation: float 6s ease-in-out infinite;
+}
+.particle--1 { width: 5px; height: 5px; background: var(--accent); top: 20%; left: 10%; animation-duration: 7s; }
+.particle--2 { width: 7px; height: 7px; background: var(--accent-3); bottom: 25%; right: 12%; animation-duration: 9s; animation-delay: 1s; }
+.particle--3 { width: 4px; height: 4px; background: var(--accent-2); top: 60%; left: 18%; animation-duration: 8s; animation-delay: 2s; }
+.particle--4 { width: 6px; height: 6px; background: #22d3ee; bottom: 10%; right: 28%; animation-duration: 10s; animation-delay: 3s; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes glowPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.15); opacity: 0.7; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .atom__orbit, .atom__electron, .particle, .hero-glow {
+    animation: none !important;
+  }
+  .page { animation: none !important; }
 }
 
 /* search */

@@ -2107,9 +2107,10 @@
      PAGE 1 - MAIN LABORATORY PAGE
      --------------------------------------------------------------------- */
   function renderHome() {
-    const cards = experiments
-      .map(function (experiment) { return experimentCardHtml(experiment, ""); })
-      .join("");
+    const recent = experiments.slice(0, 3);
+    const recentCards = recent.map(function (experiment) {
+      return experimentCardHtml(experiment, "");
+    }).join("");
 
     return (
       '<div class="page stack">' +
@@ -2133,76 +2134,23 @@
                 '<span class="chip">' + experiments.length + " Experiments</span>" +
               "</div>" +
             "</div>" +
-            '<div class="univ-card__visual" aria-hidden="true">' +
-              '<div class="univ-card__orb univ-card__orb--1"></div>' +
-              '<div class="univ-card__orb univ-card__orb--2"></div>' +
-              '<svg class="univ-card__icon" viewBox="0 0 120 120" fill="none">' +
-                '<circle cx="60" cy="60" r="50" stroke="url(#grad1)" stroke-width="2" opacity="0.6"/>' +
-                '<circle cx="60" cy="60" r="35" stroke="url(#grad2)" stroke-width="1.5" opacity="0.4"/>' +
-                '<path d="M45 45 L75 45 L75 75 L45 75 Z" stroke="currentColor" stroke-width="2" fill="none"/>' +
-                '<path d="M52 55 L68 55 M52 62 L68 62 M52 69 L60 69" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' +
-                '<defs>' +
-                  '<linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">' +
-                    '<stop offset="0%" style="stop-color:#22d3ee;stop-opacity:1" />' +
-                    '<stop offset="100%" style="stop-color:#38bdf8;stop-opacity:1" />' +
-                  '</linearGradient>' +
-                  '<linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">' +
-                    '<stop offset="0%" style="stop-color:#38bdf8;stop-opacity:1" />' +
-                    '<stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />' +
-                  '</linearGradient>' +
-                '</defs>' +
-              '</svg>' +
-            "</div>" +
           "</div>" +
-          '<div class="quick-access">' +
-            '<div class="quick-access__header">' +
-              '<h3 class="quick-access__title">Quick Access</h3>' +
-              '<p class="quick-access__subtitle">Navigate to key sections</p>' +
+          '<div class="hero-side">' +
+            '<div class="hero-visual" aria-hidden="true">' +
+              '<div class="hero-glow hero-glow--a"></div>' +
+              '<div class="hero-glow hero-glow--b"></div>' +
+              '<div class="atom">' +
+                '<div class="atom__nucleus"></div>' +
+                '<div class="atom__orbit atom__orbit--a"><div class="atom__electron atom__electron--a"></div></div>' +
+                '<div class="atom__orbit atom__orbit--b"><div class="atom__electron atom__electron--b"></div></div>' +
+                '<div class="atom__orbit atom__orbit--c"><div class="atom__electron atom__electron--c"></div></div>' +
+              "</div>" +
+              '<div class="particle particle--1"></div>' +
+              '<div class="particle particle--2"></div>' +
+              '<div class="particle particle--3"></div>' +
+              '<div class="particle particle--4"></div>' +
             "</div>" +
-            '<div class="quick-access__grid">' +
-              '<a class="quick-card" href="#/catalogue" data-link>' +
-                '<div class="quick-card__icon">' + ICON.flask + "</div>" +
-                '<div class="quick-card__content">' +
-                  '<div class="quick-card__title">Experiments</div>' +
-                  '<div class="quick-card__desc">' + experiments.length + ' hands-on labs</div>' +
-                "</div>" +
-              "</a>" +
-              '<a class="quick-card" href="#/codelab" data-link>' +
-                '<div class="quick-card__icon">' + ICON.code + "</div>" +
-                '<div class="quick-card__content">' +
-                  '<div class="quick-card__title">Code Run</div>' +
-                  '<div class="quick-card__desc">Online IDE</div>' +
-                "</div>" +
-              "</a>" +
-              '<a class="quick-card" href="#/modules" data-link>' +
-                '<div class="quick-card__icon">' + ICON.book + "</div>" +
-                '<div class="quick-card__content">' +
-                  '<div class="quick-card__title">Modules</div>' +
-                  '<div class="quick-card__desc">Course modules</div>' +
-                "</div>" +
-              "</a>" +
-              '<a class="quick-card" href="#/tools" data-link>' +
-                '<div class="quick-card__icon">' + ICON.wrench + "</div>" +
-                '<div class="quick-card__content">' +
-                  '<div class="quick-card__title">Tools</div>' +
-                  '<div class="quick-card__desc">Libraries & utilities</div>' +
-                "</div>" +
-              "</a>" +
-              '<a class="quick-card" href="#/resources" data-link>' +
-                '<div class="quick-card__icon">' + ICON.doc + "</div>" +
-                '<div class="quick-card__content">' +
-                  '<div class="quick-card__title">Resources</div>' +
-                  '<div class="quick-card__desc">Study materials</div>' +
-                "</div>" +
-              "</a>" +
-              '<a class="quick-card" href="#/projects" data-link>' +
-                '<div class="quick-card__icon">' + ICON.layers + "</div>" +
-                '<div class="quick-card__content">' +
-                  '<div class="quick-card__title">Projects</div>' +
-                  '<div class="quick-card__desc">Case studies</div>' +
-                "</div>" +
-              "</a>" +
-            "</div>" +
+            studentCardHtml() +
           "</div>" +
         "</section>" +
 
@@ -2210,17 +2158,13 @@
           statsCardsHtml() +
         "</section>" +
 
-        '<section id="catalogue">' +
+        '<section id="recent-experiments" aria-label="Recent experiments">' +
           '<div class="exp-head section-title-row">' +
-            '<h2 class="exp-head__title">Experiments: <span class="exp-head__count" id="expCount">' +
-              plural(experiments.length, "experiment") + "</span></h2>" +
+            '<h2 class="exp-head__title">Recent Experiments</h2>' +
             '<span class="exp-head__spacer"></span>' +
-            '<div class="exp-head__actions">' +
-              '<button class="btn btn--sm btn--ghost" id="restoreExpBtn" type="button">Restore Defaults</button>' +
-              '<button class="btn btn--sm btn--add" id="addBtn" type="button">+ Add Experiment</button>' +
-            "</div>" +
+            '<a class="btn btn--sm btn--ghost" href="#/catalogue" data-link>View All Experiments' + ICON.arrowRight + "</a>" +
           "</div>" +
-          '<div class="exp-grid" id="expGrid">' + (cards || emptyStateHtml()) + "</div>" +
+          '<div class="exp-grid" id="recentGrid">' + (recentCards || emptyStateHtml()) + "</div>" +
         "</section>" +
 
       "</div>"
@@ -2238,19 +2182,96 @@
   }
 
   function wireHome() {
-    const grid = $("#expGrid");
-    const input = $("#searchInput");
-    const results = $("#searchResults");
-    const wrapper = $("#search");
-    const addBtn = $("#addBtn");
-    const restoreBtn = $("#restoreExpBtn");
+    const grid = $("#recentGrid");
+    if (!grid) return;
+    $$("[data-exp-card]", grid).forEach(function (card) {
+      card.addEventListener("click", function () { openExperiment(card.getAttribute("data-exp-card")); });
+      card.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openExperiment(card.getAttribute("data-exp-card"));
+        }
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------------------
+     PAGE 1b - STUDENT PROFILE  (dedicated profile page)
+     --------------------------------------------------------------------- */
+  function renderStudentProfile() {
+    return (
+      '<div class="page stack">' +
+        crumb([{ label: "Home", href: "#/" }, { label: "Student Profile" }]) +
+
+        '<section class="card card--pad" style="max-width:520px;margin-inline:auto;text-align:left">' +
+          '<div class="profile-header" style="margin-bottom:10px">' +
+            '<p class="eyebrow">' + esc(laboratory.name) + "</p>" +
+            '<h1 class="preview-title"><span class="hl">Student Profile</span></h1>' +
+            '<p class="sec-sub">Your laboratory profile and identification card. Use Edit Student Card to update your details; changes are saved in this browser.</p>' +
+          "</div>" +
+          studentCardHtml() +
+        "</section>" +
+      "</div>"
+    );
+  }
+
+  /* ---------------------------------------------------------------------
+     PAGE 2b - EXPERIMENTS CATALOGUE (dedicated experiments page)
+     --------------------------------------------------------------------- */
+  function renderCatalogue() {
+    const cards = experiments
+      .map(function (experiment) { return experimentCardHtml(experiment, ""); })
+      .join("");
+
+    return (
+      '<div class="page stack">' +
+        crumb([{ label: "Home", href: "#/" }, { label: "Experiments" }]) +
+
+        '<section class="card card--pad">' +
+          '<div class="exp-head section-title-row">' +
+            '<h2 class="exp-head__title">Experiments</h2>' +
+            '<span class="exp-head__count">' + plural(experiments.length, "experiment") + "</span>" +
+            '<span class="exp-head__spacer"></span>' +
+            '<div class="exp-head__actions">' +
+              '<button class="btn btn--sm btn--ghost" id="catRestoreBtn" type="button">Restore Defaults</button>' +
+              '<button class="btn btn--sm btn--add" id="catAddBtn" type="button">+ Add Experiment</button>' +
+            "</div>" +
+          "</div>" +
+
+          '<div class="search" id="catSearch">' +
+            '<div class="search__box">' +
+              '<span class="search__icon">' + ICON.search + "</span>" +
+              '<input class="search__input" id="catSearchInput" type="search" placeholder="Search experiments&hellip;" autocomplete="off" spellcheck="false" aria-label="Search experiments">' +
+              '<button class="search__clear" id="catSearchClear" type="button" title="Clear search">' + ICON.close + "</button>" +
+            "</div>" +
+            '<div class="ac" id="catSearchResults" role="listbox"></div>' +
+          "</div>" +
+
+          '<div class="exp-head__hint" style="margin:10px 0 0;color:var(--text-dim);font-size:12.5px">Click a card to open its preview. Use the search box to filter by title, topic, library or code.</div>' +
+
+          '<div class="exp-grid" id="catGrid">' + (cards || emptyStateHtml()) + "</div>" +
+        "</section>" +
+      "</div>"
+    );
+  }
+
+  function wireCatalogue() {
+    const grid = $("#catGrid");
+    const input = $("#catSearchInput");
+    const results = $("#catSearchResults");
+    const wrapper = $("#catSearch");
+    const addBtn = $("#catAddBtn");
+    const restoreBtn = $("#catRestoreBtn");
     let activeIndex = -1;
     let visible = experiments.slice();
 
-    /* ---- "+ Add Experiment" opens a blank form ---- */
+    function openExperiment(id) {
+      closeList();
+      go("#/experiment/" + id);
+    }
+
     if (addBtn) addBtn.addEventListener("click", function () { openExpEditor(null, addBtn); });
 
-    /* ---- "Restore Defaults" puts the built-in list back ---- */
     if (restoreBtn) restoreBtn.addEventListener("click", function () {
       const store = expStore();
       const changed = Object.keys(store.edits).length + store.deleted.length;
@@ -2270,35 +2291,23 @@
       });
     });
 
-    /* ---- opening a specific experiment ---- */
-    function openExperiment(id) {
-      closeList();
-      go("#/experiment/" + id);
+    if (grid) {
+      $$("[data-exp-card]", grid).forEach(function (card) {
+        card.addEventListener("click", function () { openExperiment(card.getAttribute("data-exp-card")); });
+        card.addEventListener("keydown", function (event) {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openExperiment(card.getAttribute("data-exp-card"));
+          }
+        });
+      });
     }
 
-    $$("[data-exp-card]", grid).forEach(function (card) {
-      card.addEventListener("click", function () { openExperiment(card.getAttribute("data-exp-card")); });
-      card.addEventListener("keydown", function (event) {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          openExperiment(card.getAttribute("data-exp-card"));
-        }
-      });
-    });
-
-    /* ---- search + autocomplete ----
-       Matches the experiment name first, but also the tagline, the summary
-       and the part titles, so searching for a library such as "pandas" or a
-       technique such as "multiindex" finds the right experiment even when
-       those words never appear in its title. */
     function haystack(e) {
       if (e.__hay) return e.__hay;
       const parts = [e.name, e.tagline, e.summary, e.objective, e.output, e.sourcePath, (e.tools || []).join(" ")];
       (e.sections || []).forEach(function (s) {
         parts.push(s.title);
-        /* The full source is indexed too so a student can find the part that
-           actually calls a library, e.g. searching "scipy" or "numpy".
-           The whole corpus is only a few tens of kB, so this stays cheap. */
         if (s.code) parts.push(s.code);
       });
       e.__hay = parts.join(" \u0001 ").toLowerCase();
@@ -2319,7 +2328,6 @@
 
       if (!visible.length) {
         grid.innerHTML = emptyStateHtml();
-        $("#expCount").textContent = "0 results";
         return;
       }
 
@@ -2336,19 +2344,17 @@
           }
         });
       });
-
-      $("#expCount").textContent = q
-        ? visible.length + " of " + experiments.length
-        : plural(experiments.length, "experiment");
     }
 
     function closeList() {
+      if (!results) return;
       results.classList.remove("is-open");
-      input.setAttribute("aria-expanded", "false");
+      if (input) input.setAttribute("aria-expanded", "false");
       activeIndex = -1;
     }
 
     function paintList() {
+      if (!input || !results) return;
       const q = input.value.trim();
       if (!q) return closeList();
       const found = matches(q).slice(0, 8);
@@ -2381,6 +2387,7 @@
     }
 
     function move(delta) {
+      if (!results) return;
       const items = $$("[data-ac]", results);
       if (!items.length) return;
       activeIndex = (activeIndex + delta + items.length) % items.length;
@@ -2391,53 +2398,56 @@
       items[activeIndex].scrollIntoView({ block: "nearest" });
     }
 
-    input.addEventListener("input", function () {
-      wrapper.classList.toggle("is-filled", input.value.length > 0);
-      activeIndex = -1;
-      paintCards(input.value);
-      paintList();
-    });
+    if (input) {
+      input.addEventListener("input", function () {
+        if (wrapper) wrapper.classList.toggle("is-filled", input.value.length > 0);
+        activeIndex = -1;
+        paintCards(input.value);
+        paintList();
+      });
 
-    input.addEventListener("focus", function () {
-      if (input.value.trim()) paintList();
-    });
+      input.addEventListener("focus", function () {
+        if (input.value.trim()) paintList();
+      });
 
-    input.addEventListener("keydown", function (event) {
-      if (event.key === "ArrowDown") { event.preventDefault(); move(1); }
-      else if (event.key === "ArrowUp") { event.preventDefault(); move(-1); }
-      else if (event.key === "Enter") {
-        const items = $$("[data-ac]", results);
-        if (items.length) {
-          event.preventDefault();
-          openExperiment(items[Math.max(activeIndex, 0)].getAttribute("data-ac"));
+      input.addEventListener("keydown", function (event) {
+        if (event.key === "ArrowDown") { event.preventDefault(); move(1); }
+        else if (event.key === "ArrowUp") { event.preventDefault(); move(-1); }
+        else if (event.key === "Enter") {
+          const items = $$("[data-ac]", results);
+          if (items.length) {
+            event.preventDefault();
+            openExperiment(items[Math.max(activeIndex, 0)].getAttribute("data-ac"));
+          }
+        } else if (event.key === "Escape") {
+          closeList();
+          input.blur();
         }
-      } else if (event.key === "Escape") {
-        closeList();
-        input.blur();
-      }
-    });
+      });
+    }
 
-    $("#searchClear").addEventListener("click", function () {
-      input.value = "";
-      wrapper.classList.remove("is-filled");
-      activeIndex = -1;
-      paintCards("");
-      closeList();
-      input.focus();
-    });
+    if ($("#catSearchClear")) {
+      $("#catSearchClear").addEventListener("click", function () {
+        input.value = "";
+        if (wrapper) wrapper.classList.remove("is-filled");
+        activeIndex = -1;
+        paintCards("");
+        closeList();
+        input.focus();
+      });
+    }
 
     document.addEventListener("click", function (event) {
-      if (!wrapper.contains(event.target)) closeList();
+      if (wrapper && !wrapper.contains(event.target)) closeList();
     });
 
     document.addEventListener("keydown", function (event) {
       const tag = (event.target.tagName || "").toLowerCase();
       if (event.key === "/" && tag !== "input" && tag !== "textarea") {
         event.preventDefault();
-        input.focus();
-        input.select();
+        if (input) { input.focus(); input.select(); }
       }
-      if (event.key === "Escape" && document.activeElement === input) closeList();
+      if (event.key === "Escape" && input && document.activeElement === input) closeList();
     });
 
     paintCards("");
@@ -2922,10 +2932,91 @@
   }
 
   /* ---------------------------------------------------------------------
+     PAGE - RESOURCES  (official learning materials)
+     --------------------------------------------------------------------- */
+  function renderResources() {
+    const byCategory = {};
+    resources.forEach(function (r) {
+      (byCategory[r.category] = byCategory[r.category] || []).push(r);
+    });
+    const groups = Object.keys(byCategory).map(function (cat) {
+      const items = byCategory[cat].map(function (r) {
+        return (
+          '<li>' +
+          '<a class="link-row" href="' + esc(r.url) + '" target="_blank" rel="noopener noreferrer">' +
+            '<span class="link-row__text"><b>' + esc(r.title) + "</b><span class=\"link-row__url\">" + esc(r.url) + "</span></span>" +
+            ICON.external +
+          "</a>" +
+          '<p class="summary" style="margin:4px 0 0">' + esc(r.description) + "</p>" +
+          "</li>"
+        );
+      }).join("");
+      return (
+        '<article class="card card--pad">' +
+          '<p class="eyebrow">' + esc(cat) + "</p>" +
+          '<h2 class="sec-title" style="margin:0">' + esc(cat) + "</h2>" +
+          '<ul class="mini-list">' + items + "</ul>" +
+        "</article>"
+      );
+    }).join("");
+
+    return (
+      '<div class="page stack">' +
+        crumb([{ label: "Home", href: "#/" }, { label: "Resources" }]) +
+
+        '<section class="card card--pad">' +
+          '<p class="eyebrow">' + esc(laboratory.name) + "</p>" +
+          '<h1 class="preview-title"><span class="hl">Resources</span></h1>' +
+          '<p class="sec-sub">Official documentation and reliable educational sources for the tools and concepts used in the laboratory&rsquo;s experiments and Code Run page.</p>' +
+        "</section>" +
+
+        '<div class="exp-grid">' + groups + "</div>" +
+      "</div>"
+    );
+  }
+
+  /* ---------------------------------------------------------------------
+     PAGE - PROJECTS  (capstone / case-study projects)
+     --------------------------------------------------------------------- */
+  function renderProjects() {
+    const cards = projects.map(function (p) {
+      const techs = p.technologies.map(function (t) {
+        return '<span class="chip">' + esc(t) + "</span>";
+      }).join("");
+      return (
+        '<article class="card card--pad project-card">' +
+          '<p class="eyebrow">' + esc(p.category) + " &middot; " + esc(p.status) + "</p>" +
+          '<h2 class="sec-title" style="margin:0">' + esc(p.title) + "</h2>" +
+          '<p class="sec-sub">' + esc(p.description) + "</p>" +
+          '<div class="meta-row" style="margin:14px 0 0">' + techs + "</div>" +
+          '<div class="module__actions" style="margin-top:16px">' +
+            '<a class="btn btn--sm btn--primary" href="' + esc(p.url) + '" target="_blank" rel="noopener noreferrer">' + ICON.external + " Open Project</a>" +
+          "</div>" +
+        "</article>"
+      );
+    }).join("");
+
+    return (
+      '<div class="page stack">' +
+        crumb([{ label: "Home", href: "#/" }, { label: "Projects" }]) +
+
+        '<section class="card card--pad">' +
+          '<p class="eyebrow">' + esc(laboratory.name) + "</p>" +
+          '<h1 class="preview-title"><span class="hl">Projects</span></h1>' +
+          '<p class="sec-sub">Completed data-science and programming projects. Each links to its real source repository &mdash; nothing is simulated or invented.</p>' +
+        "</section>" +
+
+        '<div class="exp-grid">' + cards + "</div>" +
+      "</div>"
+    );
+  }
+
+  /* ---------------------------------------------------------------------
      6. RENDER CONTROLLER
      --------------------------------------------------------------------- */
   function render() {
     const route = parseRoute();
+    try { applyPageTheme(route); } catch (e) {}
     const scrollY = window.scrollY;
     let pageTitle = laboratory.name;
 
@@ -2946,17 +3037,14 @@
          required 4-step experiment flow is never duplicated or altered;
          they simply bring the relevant block into view. */
       case "catalogue":
-        view.innerHTML = renderHome();
-        wireHome();
+        view.innerHTML = renderCatalogue();
+        wireCatalogue();
         pageTitle = "Experiments - " + laboratory.name;
-        scrollToBlock("#catalogue");
         break;
 
       case "student":
-        view.innerHTML = renderHome();
-        wireHome();
-        pageTitle = "Student Card - " + laboratory.name;
-        scrollToBlock("#studentCard");
+        view.innerHTML = renderStudentProfile();
+        pageTitle = "Student Profile - " + laboratory.name;
         break;
 
       case "codelab": {
@@ -2985,6 +3073,16 @@
       case "tools":
         view.innerHTML = renderTools();
         pageTitle = "Tools - " + laboratory.name;
+        break;
+
+      case "resources":
+        view.innerHTML = renderResources();
+        pageTitle = "Resources - " + laboratory.name;
+        break;
+
+      case "projects":
+        view.innerHTML = renderProjects();
+        pageTitle = "Projects - " + laboratory.name;
         break;
 
       case "experiment": {
@@ -3037,7 +3135,9 @@
   }
 
   /* Highlights whichever top-bar link matches the current route. */
-  function paintNav() {
+  function applyPageTheme(route){var root=document.documentElement;var r=route||'';if(r.indexOf('codelab')!==-1){root.setAttribute('data-theme','code');}else if(r.indexOf('catalogue')!==-1||r.indexOf('experiment')!==-1){root.setAttribute('data-theme','experiments');}else if(r.indexOf('modules')!==-1||r.indexOf('tools')!==-1){root.setAttribute('data-theme','modules');}else if(r.indexOf('resources')!==-1){root.setAttribute('data-theme','resources');}else if(r.indexOf('projects')!==-1){root.setAttribute('data-theme','projects');}else if(r.indexOf('profile')!==-1||r.indexOf('student')!==-1){root.setAttribute('data-theme','profile');}else{root.setAttribute('data-theme','home');}}
+
+function paintNav() {
     const route = parseRoute();
     let active = "dashboard";
     if (route.name === "catalogue") active = "catalogue";

@@ -721,7 +721,95 @@ var tools = [
   }
 ];
 
+/* -------------------------------------------------------------------------
+   6. RESOURCES  (learning materials used across the laboratory)
+   -------------------------------------------------------------------------
+   Official documentation and reliable educational sources for the tools,
+   libraries and concepts covered by the experiments and Code Run page.
+   ------------------------------------------------------------------------- */
+var resources = [
+  {
+    category: "Language",
+    title: "Python 3 Documentation",
+    description: "The official Python language reference and tutorial.",
+    url: "https://docs.python.org/3/"
+  },
+  {
+    category: "Library",
+    title: "pandas",
+    description: "Official pandas documentation for DataFrame operations used throughout the laboratory.",
+    url: "https://pandas.pydata.org/docs/"
+  },
+  {
+    category: "Library",
+    title: "NumPy",
+    description: "Official NumPy documentation for numerical arrays and mathematics.",
+    url: "https://numpy.org/doc/"
+  },
+  {
+    category: "Visualization",
+    title: "Matplotlib",
+    description: "Official Matplotlib documentation for static, animated and interactive plots.",
+    url: "https://matplotlib.org/stable/"
+  },
+  {
+    category: "Visualization",
+    title: "Seaborn",
+    description: "Official Seaborn documentation for statistical data visualization.",
+    url: "https://seaborn.pydata.org/"
+  },
+  {
+    category: "Machine Learning",
+    title: "scikit-learn",
+    description: "Official scikit-learn user guide for clustering, classification and preprocessing.",
+    url: "https://scikit-learn.org/stable/"
+  },
+  {
+    category: "Database",
+    title: "SQLite",
+    description: "Official SQLite documentation for the database used in Experiment 2.",
+    url: "https://www.sqlite.org/docs.html"
+  },
+  {
+    category: "HTTP Client",
+    title: "Requests",
+    description: "Official Requests documentation for calling REST APIs from Python.",
+    url: "https://requests.readthedocs.io/"
+  },
+  {
+    category: "Parsing",
+    title: "Beautiful Soup",
+    description: "Official Beautiful Soup documentation for web scraping (Experiment 8).",
+    url: "https://www.crummy.com/software/BeautifulSoup/bs4/doc/"
+  }
+];
+
+/* -------------------------------------------------------------------------
+   7. PROJECTS  (capstone / case-study projects)
+   -------------------------------------------------------------------------
+   Real, completed data-science projects. Only projects with a verifiable
+   source link are listed; nothing is invented.
+   ------------------------------------------------------------------------- */
+var projects = [
+  {
+    title: "Customer Personality Analysis",
+    description: "Customer segmentation using K-Means clustering with the Elbow Method and Silhouette Score, plus targeted marketing strategies.",
+    category: "Machine Learning",
+    technologies: ["Python", "pandas", "scikit-learn", "Matplotlib", "Seaborn"],
+    status: "Completed",
+    url: "https://github.com/jaisimha16"
+  },
+  {
+    title: "Text Emotion Detection",
+    description: "Emotion detection in short text using a Naive Bayes classifier trained with CountVectorizer, mapped to emojis.",
+    category: "Machine Learning",
+    technologies: ["Python", "scikit-learn"],
+    status: "Completed",
+    url: "https://github.com/jaisimha16"
+  }
+];
+
 /* Make the array available to the app, both in the browser and in Node tests. */
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { laboratory, labMeta, student, social, experiments, modules, tools };
+  module.exports = { laboratory, labMeta, student, social, experiments, modules, tools, resources, projects };
 }
