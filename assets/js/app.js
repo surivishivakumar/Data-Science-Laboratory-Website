@@ -1149,12 +1149,21 @@
     return (
       '<aside class="card idcard" id="studentCard">' +
         '<div class="idcard__top">' +
-          '<div class="idcard__photo-wrap">' + photo + "</div>" +
-          '<div class="idcard__identity">' +
-            '<span class="idcard__uni">' + esc(laboratory.name) + "</span>" +
-            '<span class="idcard__name">' + esc(student.name) + "</span>" +
-            '<span class="idcard__roll">' + esc(student.idNumber) + "</span>" +
-            '<span class="idcard__minor">' + esc(student.section) + " &middot; " + esc(labMeta.department) + "</span>" +
+          '<div class="idcard__heading">' +
+            '<span class="idcard__heading-icon">' + ICON.person + "</span>" +
+            '<strong>Student ID Card</strong>' +
+            '<button class="btn btn--sm btn--ghost idcard__edit" id="editCardBtn" type="button">' +
+              ICON.pencil + "<span>Edit Profile</span>" +
+            "</button>" +
+          "</div>" +
+          '<div class="idcard__profile">' +
+            '<div class="idcard__photo-wrap">' + photo + "</div>" +
+            '<div class="idcard__identity">' +
+              '<span class="idcard__uni">' + esc(laboratory.name) + "</span>" +
+              '<span class="idcard__name">' + esc(student.name) + "</span>" +
+              '<span class="idcard__roll">' + esc(student.idNumber) + "</span>" +
+              '<span class="idcard__minor">' + esc(student.section) + " &middot; " + esc(labMeta.department) + "</span>" +
+            "</div>" +
           "</div>" +
         "</div>" +
         '<dl class="idcard__fields">' + studentFieldsHtml() + "</dl>" +
@@ -1162,11 +1171,6 @@
         '<div class="idcard__foot">' +
           "<span>" + esc(labMeta.subjectCode) + "</span>" +
           "<span>" + esc(labMeta.academicYear) + "</span>" +
-        "</div>" +
-        '<div class="idcard__actions">' +
-          '<button class="btn btn--sm btn--ghost idcard__edit" id="editCardBtn" type="button">' +
-            ICON.pencil + "<span>Edit Student Card</span>" +
-          "</button>" +
         "</div>" +
       "</aside>"
     );
@@ -2119,34 +2123,36 @@
 
         '<section class="lab-hero" id="dashboardTop">' +
           '<div class="hero-left card">' +
-            '<div class="hero-content">' +
-              '<div class="hero-eyebrow">Digital Laboratory Platform</div>' +
-              '<h1 class="hero-title">' + esc(laboratory.name) + "</h1>" +
-              '<p class="hero-subtitle">Explore &bull; Experiment &bull; Build</p>' +
-              '<p class="hero-desc">Learn, create, and experiment with data science through hands-on experiments, live code execution, and guided learning resources.</p>' +
-              '<div class="hero-actions">' +
-                '<a class="btn btn--primary" href="#/catalogue" data-link>' + ICON.play + " Explore Experiments</a>" +
-                '<a class="btn btn--ghost" href="#/codelab" data-link>' + ICON.code + " Open Code Run</a>" +
+            '<div class="hero-main">' +
+              '<div class="hero-content">' +
+                '<div class="hero-eyebrow">Digital Laboratory Platform</div>' +
+                '<h1 class="hero-title">' + esc(laboratory.name) + "</h1>" +
+                '<p class="hero-subtitle">Explore &bull; Experiment &bull; Build</p>' +
+                '<p class="hero-desc">Learn, create, and experiment with data science through hands-on experiments, live code execution, and guided learning resources.</p>' +
+                '<div class="hero-actions">' +
+                  '<a class="btn btn--primary" href="#/catalogue" data-link>' + ICON.play + " Explore Experiments</a>" +
+                  '<a class="btn btn--ghost" href="#/codelab" data-link>' + ICON.code + " Open Code Run</a>" +
+                "</div>" +
               "</div>" +
-              '<div class="feature-labels">' +
-                '<span class="feature-label">Learn Concepts</span>' +
-                '<span class="feature-label">Try Experiments</span>' +
-                '<span class="feature-label">Build Projects</span>' +
+              '<div class="hero-illustration" aria-hidden="true">' +
+                '<div class="hero-glow hero-glow--a"></div>' +
+                '<div class="hero-glow hero-glow--b"></div>' +
+                '<div class="atom">' +
+                  '<div class="atom__nucleus"></div>' +
+                  '<div class="atom__orbit atom__orbit--a"><div class="atom__electron atom__electron--a"></div></div>' +
+                  '<div class="atom__orbit atom__orbit--b"><div class="atom__electron atom__electron--b"></div></div>' +
+                  '<div class="atom__orbit atom__orbit--c"><div class="atom__electron atom__electron--c"></div></div>' +
+                "</div>" +
+                '<div class="particle particle--1"></div>' +
+                '<div class="particle particle--2"></div>' +
+                '<div class="particle particle--3"></div>' +
+                '<div class="particle particle--4"></div>' +
               "</div>" +
             "</div>" +
-            '<div class="hero-illustration" aria-hidden="true">' +
-              '<div class="hero-glow hero-glow--a"></div>' +
-              '<div class="hero-glow hero-glow--b"></div>' +
-              '<div class="atom">' +
-                '<div class="atom__nucleus"></div>' +
-                '<div class="atom__orbit atom__orbit--a"><div class="atom__electron atom__electron--a"></div></div>' +
-                '<div class="atom__orbit atom__orbit--b"><div class="atom__electron atom__electron--b"></div></div>' +
-                '<div class="atom__orbit atom__orbit--c"><div class="atom__electron atom__electron--c"></div></div>' +
-              "</div>" +
-              '<div class="particle particle--1"></div>' +
-              '<div class="particle particle--2"></div>' +
-              '<div class="particle particle--3"></div>' +
-              '<div class="particle particle--4"></div>' +
+            '<div class="feature-labels">' +
+              '<span class="feature-label">Learn Concepts</span>' +
+              '<span class="feature-label">Try Experiments</span>' +
+              '<span class="feature-label">Build Projects</span>' +
             "</div>" +
           "</div>" +
           '<div class="hero-right">' +
@@ -2154,13 +2160,39 @@
           "</div>" +
         "</section>" +
 
-        '<section id="recent-experiments" aria-label="Recent experiments">' +
+        '<section class="home-recent card card--pad" id="recent-experiments" aria-label="Recent experiments">' +
           '<div class="exp-head section-title-row">' +
-            '<h2 class="exp-head__title">Recent Experiments</h2>' +
+            '<div class="recent-heading">' +
+              '<h2 class="exp-head__title"><span class="section-icon">' + ICON.flask + "</span>Recent Experiments</h2>" +
+              '<p class="recent-heading__desc">Explore the latest hands-on data science practicals.</p>' +
+            "</div>" +
             '<span class="exp-head__spacer"></span>' +
             '<a class="btn btn--sm btn--ghost" href="#/catalogue" data-link>View All Experiments' + ICON.arrowRight + "</a>" +
           "</div>" +
           '<div class="exp-grid" id="recentGrid">' + (recentCards || emptyStateHtml()) + "</div>" +
+        "</section>" +
+
+        '<section class="home-categories" aria-label="Laboratory sections">' +
+          '<a class="home-category card" href="#/modules" data-link>' +
+            '<span class="home-category__icon">' + ICON.book + "</span>" +
+            '<span><strong>Modules</strong><small>Learn step by step.</small></span>' +
+            '<span class="home-category__arrow">' + ICON.arrowRight + "</span>" +
+          "</a>" +
+          '<a class="home-category card" href="#/resources" data-link>' +
+            '<span class="home-category__icon">' + ICON.doc + "</span>" +
+            '<span><strong>Resources</strong><small>Notes &amp; materials.</small></span>' +
+            '<span class="home-category__arrow">' + ICON.arrowRight + "</span>" +
+          "</a>" +
+          '<a class="home-category card" href="#/projects" data-link>' +
+            '<span class="home-category__icon">' + ICON.layers + "</span>" +
+            '<span><strong>Projects</strong><small>Build your ideas.</small></span>' +
+            '<span class="home-category__arrow">' + ICON.arrowRight + "</span>" +
+          "</a>" +
+          '<a class="home-category card" href="#/tools" data-link>' +
+            '<span class="home-category__icon">' + ICON.wrench + "</span>" +
+            '<span><strong>Tools</strong><small>Useful utilities.</small></span>' +
+            '<span class="home-category__arrow">' + ICON.arrowRight + "</span>" +
+          "</a>" +
         "</section>" +
 
       "</div>"
