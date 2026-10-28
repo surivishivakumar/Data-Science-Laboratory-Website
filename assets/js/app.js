@@ -653,7 +653,7 @@
      ---------------------------------------------------------------------
      One shared builder so the initial grid and the live search results stay
      identical. `query` is only used to highlight the matched title text. */
-  function experimentCardHtml(experiment, query) {
+  function experimentCardHtml(experiment, query, hideStatus) {
     const sections = experiment.sections || [];
     const total = sections.length;
     const progress = readProgress();
@@ -685,13 +685,15 @@
           '<span class="chip">' + plural(total, "part") + "</span>" +
         "</div>" +
 
-        '<div class="exp-card__progress">' +
-          '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" ' +
-            'aria-valuenow="' + pct + '" aria-label="Experiment ' + esc(experiment.id) + " progress\">" +
-            '<span class="progress__bar" style="width:' + pct + '%"></span>' +
-          "</div>" +
-          '<span class="exp-card__status ' + statusClass + '">' + esc(status) + "</span>" +
-        "</div>" +
+        (hideStatus ? "" :
+          '<div class="exp-card__progress">' +
+            '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" ' +
+              'aria-valuenow="' + pct + '" aria-label="Experiment ' + esc(experiment.id) + " progress\">" +
+              '<span class="progress__bar" style="width:' + pct + '%"></span>' +
+            "</div>" +
+            '<span class="exp-card__status ' + statusClass + '">' + esc(status) + "</span>" +
+          "</div>"
+        ) +
 
         '<div class="exp-card__foot">' +
           '<span class="exp-card__parts">' + sections.map(function (section) {
@@ -2109,7 +2111,7 @@
   function renderHome() {
     const recent = experiments.slice(0, 3);
     const recentCards = recent.map(function (experiment) {
-      return experimentCardHtml(experiment, "");
+      return experimentCardHtml(experiment, "", true);
     }).join("");
 
     return (
@@ -2258,6 +2260,8 @@
     const restoreBtn = $("#catRestoreBtn");
     let activeIndex = -1;
     let visible = experiments.slice();
+
+    if (!grid) return;
 
     function openExperiment(id) {
       closeList();
