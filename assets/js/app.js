@@ -2116,27 +2116,23 @@
       '<div class="page stack">' +
 
         '<section class="lab-hero" id="dashboardTop">' +
-          '<div class="card univ-card univ-card--hero">' +
-            '<div class="univ-card__hero-content">' +
-              '<div class="univ-card__badge-row">' +
-                '<span class="eyebrow">Digital Laboratory Platform</span>' +
-                '<span class="chip chip--accent">' + esc(labMeta.subjectCode) + "</span>" +
-              "</div>" +
-              '<h1 class="univ-card__lab univ-card__lab--hero">' + esc(laboratory.name) + "</h1>" +
-              '<p class="univ-card__desc">An interactive data science laboratory platform with hands-on experiments, real-time code execution, and comprehensive learning resources designed for academic excellence.</p>' +
-              '<div class="univ-card__actions">' +
+          '<div class="hero-left card">' +
+            '<div class="hero-content">' +
+              '<div class="hero-eyebrow">Digital Laboratory Platform</div>' +
+              '<h1 class="hero-title">' + esc(laboratory.name) + "</h1>" +
+              '<p class="hero-subtitle">Explore &bull; Experiment &bull; Build</p>' +
+              '<p class="hero-desc">Learn, create, and experiment with data science through hands-on experiments, live code execution, and guided learning resources.</p>' +
+              '<div class="hero-actions">' +
                 '<a class="btn btn--primary" href="#/catalogue" data-link>' + ICON.play + " Explore Experiments</a>" +
                 '<a class="btn btn--ghost" href="#/codelab" data-link>' + ICON.code + " Open Code Run</a>" +
               "</div>" +
-              '<div class="univ-card__meta">' +
-                '<span class="chip">' + esc(labMeta.academicYear) + "</span>" +
-                '<span class="chip">' + esc(labMeta.department) + "</span>" +
-                '<span class="chip">' + experiments.length + " Experiments</span>" +
+              '<div class="feature-labels">' +
+                '<span class="feature-label">Learn Concepts</span>' +
+                '<span class="feature-label">Try Experiments</span>' +
+                '<span class="feature-label">Build Projects</span>' +
               "</div>" +
             "</div>" +
-          "</div>" +
-          '<div class="hero-side">' +
-            '<div class="hero-visual" aria-hidden="true">' +
+            '<div class="hero-illustration" aria-hidden="true">' +
               '<div class="hero-glow hero-glow--a"></div>' +
               '<div class="hero-glow hero-glow--b"></div>' +
               '<div class="atom">' +
@@ -2150,12 +2146,10 @@
               '<div class="particle particle--3"></div>' +
               '<div class="particle particle--4"></div>' +
             "</div>" +
+          "</div>" +
+          '<div class="hero-right">' +
             studentCardHtml() +
           "</div>" +
-        "</section>" +
-
-        '<section class="dash-stats" aria-label="Laboratory summary">' +
-          statsCardsHtml() +
         "</section>" +
 
         '<section id="recent-experiments" aria-label="Recent experiments">' +
