@@ -255,14 +255,26 @@ one that admits a gap:
 
 ### Editor features
 
-- Syntax highlighting, line-number gutter, auto-indent on Enter and `{`/`:`.
+The editor is [Monaco](https://microsoft.github.io/monaco-editor/) 0.52.2
+(the engine behind VS Code), pinned on jsDelivr and loaded on demand. If the
+CDN is blocked, the original textarea editor stays available so the page and
+runner keep working.
+
+- Syntax highlighting for every supported language, line numbers, bracket
+  matching, current-line highlight, folding and indent guides.
+- Real auto-indent, auto-closing brackets and quotes, multi-cursor editing,
+  find/replace, undo/redo and comment toggling.
 - Error lines from a Python traceback or compiler diagnostic are marked in the
-  gutter and highlighted.
-- Autocomplete for keywords and builtins, with Tab/Enter to accept.
-- Formatting (re-indent), Copy, Clear.
-- `Ctrl`+`Enter` or `F5` run, `Ctrl`+`S` save, `Tab` indent.
-- Dark and light themes; the editor uses a code-specific palette in each.
-- Responsive down to 320 px.
+  gutter and highlighted; the first error is scrolled into view.
+- Autocomplete for language keywords and builtins, with Tab/Enter to accept.
+- Formatting (re-indent), Copy, Reset to starter, font-size controls, word
+  wrap and a full-screen editor. Font size and wrap are remembered.
+- `Ctrl`+`Enter` or `F5` run, `Ctrl`+`S` save, `Ctrl`+`F` find, `Ctrl`+`/`
+  comment, `Tab` indent. Both dark and light themes use a code-specific palette.
+- Edits are autosaved to the workspace (after a short debounce) so a refresh
+  does not lose the current draft; **Save** still creates a version snapshot.
+- Responsive down to 320 px, with the editor and output stacked on smaller
+  screens.
 
 ### Files, folders and version history
 

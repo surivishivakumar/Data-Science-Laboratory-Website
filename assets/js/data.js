@@ -282,7 +282,9 @@ var experiments = [
     "youtubeLink": "",
     "githubLink": "",
     "sourcePath": "C:\\Users\\suriv\\OneDrive\\Desktop\\DS experiments pra\\Exp5",
-    "sourceFiles": ["exp5a.ipynb"],
+    "sourceFiles": [
+      "exp5a.ipynb"
+    ],
     "summary": "This is the largest and most visual experiment, covering the plotting workflow with Matplotlib and Seaborn. It opens with the Iris dataset loaded directly from a remote CSV, followed by `head()`, `info()` and `describe()` to profile it. Five core chart types are then produced: a Matplotlib line plot of sepal and petal length, a Seaborn scatter plot coloured by species, a histogram with a kernel density overlay, a box plot comparing petal length across species, and a Seaborn pair plot of the full feature matrix. A second figure uses `plt.subplots()` to build a two-row annotated layout of monthly sales and expenses and exports it to PNG at 300 DPI. The remaining sections cover grouped and stacked bar plots built directly from a DataFrame with `df.plot()`, a histogram and filled KDE density plot of marks, a scatter plot of study hours against marks with the Pearson correlation coefficient printed, and a box plot of marks grouped by department.",
     "sections": [
       {
@@ -466,8 +468,98 @@ var experiments = [
         "outputImage": ""
       }
     ]
+  },
+  {
+    "id": 8,
+    "name": "Web Scraping using Beautiful Soup",
+    "tagline": "Extract, clean and analyze product reviews from web using BeautifulSoup",
+    "previewVideo": "",
+    "youtubeVideo": "",
+    "youtubeLink": "",
+    "githubLink": "",
+    "summary": "Extract product reviews from Amazon website, perform EDA, generate word clouds for all/positive/negative reviews, analyze stopwords/numerics/word/char counts, average word length, and apply VADER sentiment analysis.",
+    "sections": [
+      {
+        "id": "a",
+        "letter": "A",
+        "title": "Aim",
+        "content": "Extract product reviews from Amazon website and save to a file. Perform Exploratory Data Analysis on extracted product reviews."
+      },
+      {
+        "id": "b",
+        "letter": "B",
+        "title": "Algorithm/Steps",
+        "content": "1. Import required libraries (requests, BeautifulSoup, pandas, nltk, wordcloud, matplotlib, vaderSentiment). 2. Scrape product reviews from Amazon. 3. Save reviews to file/CSV. 4. Clean and preprocess text. 5. Perform EDA and generate WordClouds for all/positive/negative reviews. 6. Compute word/char counts and average word length. 7. Perform sentiment analysis using VADER."
+      },
+      {
+        "id": "c",
+        "letter": "C",
+        "title": "Program",
+        "content": "import requests\nfrom bs4 import BeautifulSoup\nimport pandas as pd\nfrom nltk.corpus import stopwords\nfrom wordcloud import WordCloud\nimport matplotlib.pyplot as plt\nfrom vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer\n\nheaders = {'User-Agent': 'Mozilla/5.0'}\nurl = 'YOUR_AMAZON_REVIEW_URL'\nresponse = requests.get(url, headers=headers)\nsoup = BeautifulSoup(response.text, 'html.parser')\n# Extract reviews\nreviews = []\nfor r in soup.find_all('span', {'data-hook': 'review-body'}):\n    reviews.append(r.text.strip())\ndf = pd.DataFrame({'reviews': reviews})\ndf.to_csv('reviews.csv', index=False)\n"
+      },
+      {
+        "id": "d",
+        "letter": "D",
+        "title": "Output",
+        "content": "Reviews extracted and saved; WordClouds and EDA visualizations generated; sentiment scores computed."
+      },
+      {
+        "id": "e",
+        "letter": "E",
+        "title": "Result",
+        "content": "Product reviews were successfully scraped, analyzed, and sentiment analysis was performed using VADER."
+      }
+    ],
+    "tasks": [],
+    "codeTemplate": "import requests\nfrom bs4 import BeautifulSoup\nimport pandas as pd\nimport nltk\nfrom nltk.corpus import stopwords\nfrom wordcloud import WordCloud\nimport matplotlib.pyplot as plt\nfrom vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer\n",
+    "expectedOutput": "",
+    "vivaQuestions": [],
+    "references": [
+      "https://www.crummy.com/software/BeautifulSoup/",
+      "https://github.com/cjhutto/vaderSentiment"
+    ]
+  },
+  {
+    "id": 9,
+    "name": "Case Study: Customer Personality Analysis",
+    "previewVideo": null,
+    "youtubeVideo": null,
+    "youtubeLink": null,
+    "githubLink": "https://github.com/jaisimha16",
+    "summary": "Analyzes customer segments from purchasing behaviour using the K-Means clustering algorithm. Covers data collection, cleaning, exploratory analysis, clustering with the Elbow Method and Silhouette Score, segment interpretation and targeted marketing strategies.",
+    "sections": [
+      {
+        "letter": "A",
+        "title": "KMeans clustering on Mall Customers",
+        "video": null,
+        "code": "import pandas as pd\nimport seaborn as sns\nimport matplotlib.pyplot as plt\nfrom sklearn.cluster import KMeans\n\nurl = \"https://raw.githubusercontent.com/selva86/datasets/master/Mall_Customers.csv\"\ndf = pd.read_csv(url)\n\nX = df[[\"Annual Income (k$)\", \"Spending Score (1-100)\"]]\n\nkmeans = KMeans(n_clusters=5, random_state=0)\ndf[\"Cluster\"] = kmeans.fit_predict(X)\n\nsns.scatterplot(data=df, x=\"Annual Income (k$)\", y=\"Spending Score (1-100)\",\n                hue=\"Cluster\", palette=\"tab10\")\nplt.title(\"Customer Segments\")\nplt.xlabel(\"Annual Income (k$)\")\nplt.ylabel(\"Spending Score\")\nplt.show()\n"
+      },
+      {
+        "letter": "B",
+        "title": "Customer personality segmentation with the Elbow Method",
+        "video": null,
+        "code": "import pandas as pd\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.cluster import KMeans\nfrom sklearn.metrics import silhouette_score\n\ndf = pd.read_csv(\"marketing_campaign.csv\", sep=\"\\t\")\n\nfeatures = [\"Income\", \"MntWines\", \"MntFruits\", \"MntMeatProducts\",\n            \"MntFishProducts\", \"MntSweetProducts\", \"MntGoldProds\"]\ndata = df[features].copy()\ndata = data.fillna(data.median())\ndata = data.clip(lower=data.quantile(0.01), upper=data.quantile(0.99), axis=1)\n\nscaler = StandardScaler()\nX = scaler.fit_transform(data)\n\ninertias, scores = [], []\nfor k in range(2, 8):\n    model = KMeans(n_clusters=k, random_state=42, n_init=10)\n    labels = model.fit_predict(X)\n    inertias.append(model.inertia_)\n    scores.append(silhouette_score(X, labels))\n\nplt.plot(range(2, 8), inertias, marker='o')\nplt.xlabel('Number of Clusters (K)')\nplt.ylabel('Inertia')\nplt.title('Elbow Method')\nplt.show()\nprint(\"Silhouette scores:\", dict(zip(range(2, 8), scores)))\n"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "name": "Case Study: Text Emotion Detection",
+    "previewVideo": null,
+    "youtubeVideo": null,
+    "youtubeLink": null,
+    "githubLink": "https://github.com/jaisimha16",
+    "summary": "Detects the emotion expressed in a short text message and maps it to a suitable emoji. Trains a Naive Bayes classifier on a small labelled dataset using CountVectorizer, then predicts the emotion of a new message.",
+    "sections": [
+      {
+        "letter": "A",
+        "title": "Train a Naive Bayes text-emotion classifier",
+        "video": null,
+        "code": "from sklearn.feature_extraction.text import CountVectorizer\nfrom sklearn.naive_bayes import MultinomialNB\n\ntexts = [\"I am happy\", \"I am angry\", \"I feel sad\", \"I love this\"]\nlabels = [\"happy\", \"angry\", \"sad\", \"happy\"]\n\nvec = CountVectorizer()\nX = vec.fit_transform(texts)\n\nmodel = MultinomialNB()\nmodel.fit(X, labels)\n\ntest = vec.transform([\"I am so sad today\"])\nprint(model.predict(test))\n"
+      }
+    ]
   }
-];
+];;
 
 /* -------------------------------------------------------------------------
    4. MODULES  (shown on the Modules page)

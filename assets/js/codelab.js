@@ -58,7 +58,9 @@
     copy: '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M9 3h9a2 2 0 0 1 2 2v11h-2V5H9V3ZM5 7h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/></svg>',
     trash: '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Z"/></svg>',
     down: '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M12 3v10.2l3.6-3.6 1.4 1.4-6 6-6-6 1.4-1.4L10 13.2V3h2ZM4 19h16v2H4v-2Z"/></svg>',
-    plus: '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"/></svg>'
+    plus: '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"/></svg>',
+    expand: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3H3v6M15 3h6v6M21 15v6h-6M3 15v6h6"/></svg>',
+    shrink: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h6V3M21 9h-6V3M14 21v-6h6M10 21v-6H4"/></svg>'
   };
 
   function esc(s) {
@@ -415,6 +417,7 @@
           name: "hello." + lang.ext,
           lang: id,
           code: SAMPLES[id] || "",
+          savedCode: SAMPLES[id] || "",
           created: Date.now(), modified: Date.now(),
           versions: []
         }]
@@ -1051,10 +1054,303 @@ self.onmessage = async function (ev) {
   }
 
   /* ===================================================================
-     7. EDITOR
+     7. EDITOR — Monaco from the CDN, with the textarea as a safe fallback
      =================================================================== */
+  var MONACO_VERSION = "0.52.2";
+  var MONACO_CDN = "https://cdn.jsdelivr.net/npm/monaco-editor@" + MONACO_VERSION + "/min/";
+  var EDITOR_PREF_KEY = "dslab.editor.prefs.v1";
+  var EDITOR_FONT_MIN = 12;
+  var EDITOR_FONT_MAX = 24;
+  var MONACO_LANG = {
+    python: "python", sql: "sql", javascript: "javascript",
+    html: "html", css: "css",
+    java: "java", c: "c", cpp: "cpp", csharp: "csharp", php: "php",
+    kotlin: "kotlin", go: "go", rust: "rust", ruby: "ruby",
+    bash: "shell", swift: "swift", scala: "scala", perl: "perl",
+    r: "r", elixir: "elixir"
+  };
 
-  function createEditor(host, opts) {
+  var monacoPromise = null;
+  var monacoThemeWatched = false;
+  var monacoWorkerUrls = {};
+  var monacoLangConfigs = {};
+  var editorFacades = [];
+
+  function readEditorPrefs() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(EDITOR_PREF_KEY) || "{}");
+      return {
+        fontSize: Math.min(EDITOR_FONT_MAX, Math.max(EDITOR_FONT_MIN, parseInt(raw.fontSize, 10) || 14)),
+        wrap: !!raw.wrap
+      };
+    } catch (e) {
+      return { fontSize: 14, wrap: false };
+    }
+  }
+
+  function writeEditorPrefs(prefs) {
+    try {
+      localStorage.setItem(EDITOR_PREF_KEY, JSON.stringify({
+        fontSize: prefs.fontSize,
+        wrap: !!prefs.wrap
+      }));
+    } catch (e) { /* private mode */ }
+  }
+
+  function monacoLangId(id) {
+    return MONACO_LANG[id] || "plaintext";
+  }
+
+  function monacoThemeName() {
+    return document.documentElement.getAttribute("data-theme") === "light" ? "dslab-light" : "dslab-dark";
+  }
+
+  function applyMonacoTheme() {
+    if (window.monaco && window.monaco.editor) {
+      try { window.monaco.editor.setTheme(monacoThemeName()); } catch (e) { /* ignore */ }
+    }
+  }
+
+  function watchMonacoTheme() {
+    if (monacoThemeWatched || typeof MutationObserver === "undefined") return;
+    monacoThemeWatched = true;
+    new MutationObserver(applyMonacoTheme).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"]
+    });
+  }
+
+  function ensureMonacoCss() {
+    if (document.getElementById("dslab-monaco-css")) return;
+    var link = document.createElement("link");
+    link.id = "dslab-monaco-css";
+    link.rel = "stylesheet";
+    link.href = MONACO_CDN + "vs/editor/editor.main.css";
+    document.head.appendChild(link);
+  }
+
+  function monacoWorkerUrl() {
+    var file = MONACO_CDN + "vs/base/worker/workerMain.js";
+    if (!monacoWorkerUrls[file]) {
+      var source = "self.MonacoEnvironment={baseUrl:" + JSON.stringify(MONACO_CDN) + "};" +
+        "importScripts(" + JSON.stringify(file) + ");";
+      monacoWorkerUrls[file] = URL.createObjectURL(new Blob([source], { type: "text/javascript" }));
+    }
+    return monacoWorkerUrls[file];
+  }
+
+  function ensureMonacoLanguageConfig(m, id) {
+    var langId = monacoLangId(id);
+    if (!m || !langId || langId === "plaintext") return Promise.resolve();
+    if (monacoLangConfigs[langId]) return monacoLangConfigs[langId];
+
+    var entry = null;
+    var languages = m.languages.getLanguages();
+    for (var i = 0; i < languages.length; i++) {
+      if (languages[i].id === langId && typeof languages[i].loader === "function") {
+        entry = languages[i];
+        break;
+      }
+    }
+    if (!entry) {
+      monacoLangConfigs[langId] = Promise.resolve();
+      return monacoLangConfigs[langId];
+    }
+
+    monacoLangConfigs[langId] = entry.loader().then(function (mod) {
+      if (mod && mod.conf) m.languages.setLanguageConfiguration(langId, mod.conf);
+    }).catch(function () {
+      /* the editor still works without a language configuration */
+    });
+    return monacoLangConfigs[langId];
+  }
+
+  function defineMonacoThemes(m) {
+    m.editor.defineTheme("dslab-dark", {
+      base: "vs-dark",
+      inherit: true,
+      rules: [
+        { token: "", foreground: "cdd6e1" },
+        { token: "comment", foreground: "6f8196", fontStyle: "italic" },
+        { token: "keyword", foreground: "7dd3fc" },
+        { token: "keyword.control", foreground: "7dd3fc" },
+        { token: "string", foreground: "86efac" },
+        { token: "string.escape", foreground: "fde68a" },
+        { token: "number", foreground: "f2c14e" },
+        { token: "type", foreground: "5eead4" },
+        { token: "type.identifier", foreground: "5eead4" },
+        { token: "function", foreground: "c4b5fd" },
+        { token: "identifier", foreground: "d7e2ef" },
+        { token: "operator", foreground: "93c5fd" },
+        { token: "delimiter", foreground: "8fa3b8" },
+        { token: "tag", foreground: "7dd3fc" },
+        { token: "attribute.name", foreground: "5eead4" },
+        { token: "attribute.value", foreground: "86efac" }
+      ],
+      colors: {
+        "editor.background": "#0d131d",
+        "editor.foreground": "#cdd6e1",
+        "editorLineNumber.foreground": "#41536a",
+        "editorLineNumber.activeForeground": "#9fb3c8",
+        "editorCursor.foreground": "#2dd4bf",
+        "editor.selectionBackground": "#2dd4bf40",
+        "editor.inactiveSelectionBackground": "#2dd4bf24",
+        "editor.lineHighlightBackground": "#ffffff0a",
+        "editor.lineHighlightBorder": "#00000000",
+        "editorIndentGuide.background1": "#ffffff12",
+        "editorIndentGuide.activeBackground1": "#2dd4bf45",
+        "editorBracketMatch.background": "#2dd4bf1f",
+        "editorBracketMatch.border": "#2dd4bf66",
+        "editorGutter.background": "#0d131d",
+        "editorWidget.background": "#111a26",
+        "editorWidget.border": "#22303f",
+        "editorSuggestWidget.background": "#111a26",
+        "editorSuggestWidget.border": "#22303f",
+        "editorSuggestWidget.selectedBackground": "#2dd4bf26",
+        "editorHoverWidget.background": "#111a26",
+        "editorHoverWidget.border": "#22303f",
+        "input.background": "#0b1119",
+        "input.border": "#22303f",
+        "focusBorder": "#2dd4bf66",
+        "scrollbarSlider.background": "#8fa3b81f",
+        "scrollbarSlider.hoverBackground": "#8fa3b838",
+        "scrollbarSlider.activeBackground": "#8fa3b855"
+      }
+    });
+    m.editor.defineTheme("dslab-light", {
+      base: "vs",
+      inherit: true,
+      rules: [
+        { token: "", foreground: "22313f" },
+        { token: "comment", foreground: "76889a", fontStyle: "italic" },
+        { token: "keyword", foreground: "0369a1" },
+        { token: "keyword.control", foreground: "0369a1" },
+        { token: "string", foreground: "15803d" },
+        { token: "string.escape", foreground: "b45309" },
+        { token: "number", foreground: "a16207" },
+        { token: "type", foreground: "0f766e" },
+        { token: "type.identifier", foreground: "0f766e" },
+        { token: "function", foreground: "6d28d9" },
+        { token: "identifier", foreground: "25313d" },
+        { token: "operator", foreground: "0e7490" },
+        { token: "delimiter", foreground: "52667a" },
+        { token: "tag", foreground: "0369a1" },
+        { token: "attribute.name", foreground: "0f766e" },
+        { token: "attribute.value", foreground: "15803d" }
+      ],
+      colors: {
+        "editor.background": "#f7fafc",
+        "editor.foreground": "#22313f",
+        "editorLineNumber.foreground": "#93a5b9",
+        "editorLineNumber.activeForeground": "#43566b",
+        "editorCursor.foreground": "#0d9488",
+        "editor.selectionBackground": "#0d94882e",
+        "editor.inactiveSelectionBackground": "#0d94881a",
+        "editor.lineHighlightBackground": "#00000005",
+        "editor.lineHighlightBorder": "#00000000",
+        "editorIndentGuide.background1": "#00000014",
+        "editorIndentGuide.activeBackground1": "#0d94884a",
+        "editorBracketMatch.background": "#0d94881a",
+        "editorBracketMatch.border": "#0d948866",
+        "editorGutter.background": "#f7fafc",
+        "editorWidget.background": "#ffffff",
+        "editorWidget.border": "#d5dee8",
+        "editorSuggestWidget.background": "#ffffff",
+        "editorSuggestWidget.border": "#d5dee8",
+        "editorSuggestWidget.selectedBackground": "#0d94881f",
+        "editorHoverWidget.background": "#ffffff",
+        "editorHoverWidget.border": "#d5dee8",
+        "input.background": "#ffffff",
+        "input.border": "#d5dee8",
+        "focusBorder": "#0d948866",
+        "scrollbarSlider.background": "#52667a24",
+        "scrollbarSlider.hoverBackground": "#52667a3d",
+        "scrollbarSlider.activeBackground": "#52667a5c"
+      }
+    });
+  }
+
+  function loadMonaco() {
+    if (monacoPromise) return monacoPromise;
+    monacoPromise = new Promise(function (resolve, reject) {
+      if (window.monaco && window.monaco.editor) {
+        defineMonacoThemes(window.monaco);
+        watchMonacoTheme();
+        applyMonacoTheme();
+        resolve(window.monaco);
+        return;
+      }
+      ensureMonacoCss();
+      var script = document.createElement("script");
+      script.src = MONACO_CDN + "vs/loader.js";
+      script.async = true;
+      script.onload = function () {
+        try {
+          var req = window.require;
+          if (!req || typeof req.config !== "function") throw new Error("Editor loader did not initialise.");
+          window.MonacoEnvironment = {
+            getWorkerUrl: function () { return monacoWorkerUrl(); }
+          };
+          req.config({ paths: { vs: MONACO_CDN + "vs" } });
+          req(["vs/editor/editor.main"], function () {
+            if (!window.monaco || !window.monaco.editor) {
+              reject(new Error("Editor library did not initialise."));
+              return;
+            }
+            defineMonacoThemes(window.monaco);
+            watchMonacoTheme();
+            applyMonacoTheme();
+            resolve(window.monaco);
+          }, function (err) {
+            reject(err instanceof Error ? err : new Error("Editor library failed to load."));
+          });
+        } catch (err) {
+          reject(err);
+        }
+      };
+      script.onerror = function () {
+        reject(new Error("Could not download the editor library."));
+      };
+      document.head.appendChild(script);
+    });
+    return monacoPromise;
+  }
+
+  function registerEditor(facade) {
+    editorFacades.push(facade);
+    return facade;
+  }
+
+  function forEachLiveEditor(fn) {
+    editorFacades = editorFacades.filter(function (ed) {
+      if (!ed.el || !ed.el.isConnected) {
+        try { ed.dispose(); } catch (e) { /* ignore */ }
+        return false;
+      }
+      return true;
+    });
+    editorFacades.forEach(fn);
+  }
+
+  function reindentCode(code, lang) {
+    var text = String(code).replace(/\r\n?/g, "\n");
+    var lines = text.split("\n");
+    var indent = " ".repeat((lang && lang.indent) || 4);
+    var depth = 0;
+    var opens = /[{[(:]\s*(#.*)?$/;
+    var closes = /^\s*[}\])]/;
+    var strip = /^\s*/;
+    lines = lines.map(function (line) {
+      if (!line.trim()) return "";
+      if (closes.test(line)) depth = Math.max(0, depth - 1);
+      var out = indent.repeat(depth) + line.replace(strip, "").replace(/\s+$/, "");
+      if (opens.test(line.replace(/\s+$/, ""))) depth++;
+      return out;
+    });
+    return lines.join("\n");
+  }
+
+  function createFallbackEditor(host, opts) {
     var lang = opts.lang;
 
     var ta = document.createElement("textarea");
@@ -1073,18 +1369,44 @@ self.onmessage = async function (ev) {
     gutter.className = "ed__gutter";
     gutter.setAttribute("aria-hidden", "true");
 
-    var wrap = document.createElement("div");
-    wrap.className = "ed";
-    wrap.appendChild(gutter);
-    wrap.appendChild(pre);
-    wrap.appendChild(ta);
+    var lineHl = document.createElement("div");
+    lineHl.className = "ed__line";
+    lineHl.setAttribute("aria-hidden", "true");
+
+    /* The textarea and the highlight layer must share one content box. If the
+       textarea spans the whole editor while <pre> starts after the gutter,
+       their text origins differ by the gutter width and the caret drifts. */
+    var codeArea = document.createElement("div");
+    codeArea.className = "ed__code";
 
     var ac = document.createElement("div");
     ac.className = "ed__ac";
     ac.hidden = true;
-    wrap.appendChild(ac);
+
+    var mirror = document.createElement("div");
+    mirror.className = "ed__mirror";
+    mirror.setAttribute("aria-hidden", "true");
+    var mirrorMark = document.createElement("span");
+    mirrorMark.textContent = "\u200b";
+    mirror.appendChild(mirrorMark);
+
+    codeArea.appendChild(pre);
+    codeArea.appendChild(ta);
+    codeArea.appendChild(ac);
+    codeArea.appendChild(mirror);
+
+    var wrap = document.createElement("div");
+    wrap.className = "ed";
+    wrap.appendChild(gutter);
+    wrap.appendChild(lineHl);
+    wrap.appendChild(codeArea);
 
     host.appendChild(wrap);
+
+    var initialTab = (lang && lang.indent) || 4;
+    ta.style.tabSize = initialTab;
+    pre.style.tabSize = initialTab;
+    mirror.style.tabSize = initialTab;
 
     var errorLines = [];
     var acItems = [];
@@ -1102,12 +1424,29 @@ self.onmessage = async function (ev) {
     function paint() {
       pre.innerHTML = highlight(ta.value, lang) + "\n";
       paintGutter();
+      updateLineHighlight();
     }
 
     function syncScroll() {
       pre.scrollTop = ta.scrollTop;
       pre.scrollLeft = ta.scrollLeft;
       gutter.scrollTop = ta.scrollTop;
+      updateLineHighlight();
+      if (!ac.hidden) placeAc();
+    }
+
+    function updateLineHighlight() {
+      if (!document.body.contains(wrap)) return;
+      var upto = ta.value.slice(0, ta.selectionStart);
+      var line = upto.split("\n").length - 1;
+      var cs = window.getComputedStyle(ta);
+      var lh = parseFloat(cs.lineHeight) || 20;
+      var padTop = parseFloat(cs.paddingTop) || 0;
+      var top = padTop + line * lh - ta.scrollTop;
+      lineHl.style.left = gutter.offsetWidth + "px";
+      lineHl.style.height = lh + "px";
+      lineHl.style.top = top + "px";
+      lineHl.hidden = top < -lh || top > wrap.clientHeight;
     }
 
     function changed() {
@@ -1115,10 +1454,13 @@ self.onmessage = async function (ev) {
       if (opts.onChange) opts.onChange(ta.value);
     }
 
-    ta.addEventListener("input", function () { changed(); updateAc(); });
+    ta.addEventListener("input", function () { changed(); updateAc(); updateLineHighlight(); });
     ta.addEventListener("scroll", syncScroll);
     ta.addEventListener("blur", hideAc);
-    ta.addEventListener("click", hideAc);
+    ta.addEventListener("click", function () { hideAc(); updateLineHighlight(); });
+    ta.addEventListener("keyup", updateLineHighlight);
+    ta.addEventListener("keydown", function () { setTimeout(updateLineHighlight, 0); });
+    ta.addEventListener("focus", updateLineHighlight);
 
     /* ---- autocomplete ---- */
     function candidates(prefix) {
@@ -1136,10 +1478,43 @@ self.onmessage = async function (ev) {
         .slice(0, 40);
     }
 
+    /* Mirror the text before the caret to find its on-screen position. The
+       mirror shares the textarea's font, padding, tab size and line height. */
+    function caretPoint() {
+      var upto = ta.value.slice(0, ta.selectionStart);
+      mirror.textContent = upto;
+      mirror.appendChild(mirrorMark);
+      var cs = window.getComputedStyle(ta);
+      var lh = parseFloat(cs.lineHeight) || 20;
+      var mr = mirrorMark.getBoundingClientRect();
+      var cr = codeArea.getBoundingClientRect();
+      return {
+        x: mr.left - cr.left - ta.scrollLeft,
+        y: mr.top - cr.top - ta.scrollTop,
+        lineHeight: lh
+      };
+    }
+
+    function placeAc() {
+      if (ac.hidden || !acItems.length) return;
+      var pt = caretPoint();
+      var areaW = codeArea.clientWidth;
+      var areaH = codeArea.clientHeight;
+      var w = ac.offsetWidth || 220;
+      var h = ac.offsetHeight || 0;
+      var left = Math.max(4, Math.min(areaW - w - 4, pt.x + 10));
+      var top = pt.y + pt.lineHeight + 4;
+      if (top + h > areaH) top = pt.y - h - 4;
+      top = Math.max(4, Math.min(areaH - h - 4, top));
+      ac.style.left = left + "px";
+      ac.style.top = top + "px";
+    }
+
     function paintAc() {
       ac.innerHTML = acItems.map(function (w, i) {
         return '<div class="ed__ac-item' + (i === acIndex ? " is-on" : "") + '">' + esc(w) + "</div>";
       }).join("");
+      placeAc();
     }
 
     function hideAc() { ac.hidden = true; acItems = []; }
@@ -1287,14 +1662,329 @@ self.onmessage = async function (ev) {
     return {
       el: wrap,
       textarea: ta,
+      engine: "fallback",
       get value() { return ta.value; },
       set value(v) { ta.value = v == null ? "" : v; paint(); },
-      setLang: function (l) { lang = l; hideAc(); paint(); },
+      setLang: function (l) {
+        lang = l;
+        var ts = (l && l.indent) || 4;
+        ta.style.tabSize = ts;
+        pre.style.tabSize = ts;
+        mirror.style.tabSize = ts;
+        hideAc();
+        paint();
+      },
       setErrors: function (lines) { errorLines = lines || []; paintGutter(); },
       clearErrors: function () { errorLines = []; paintGutter(); },
+      setFontSize: function (px) {
+        wrap.style.fontSize = Math.min(EDITOR_FONT_MAX, Math.max(EDITOR_FONT_MIN, px)) + "px";
+        updateLineHighlight();
+        if (!ac.hidden) placeAc();
+      },
+      setWrap: function () { return false; },
+      getSelection: function () {
+        return {
+          start: ta.selectionStart,
+          end: ta.selectionEnd,
+          focused: document.activeElement === ta
+        };
+      },
       format: format,
-      focus: function () { ta.focus(); }
+      focus: function () { ta.focus(); },
+      layout: function () {
+        updateLineHighlight();
+        if (!ac.hidden) placeAc();
+      },
+      dispose: function () { hideAc(); }
     };
+  }
+
+  /* Monaco facade. The fallback is mounted immediately and swapped out once
+     the CDN editor is ready, so the page is usable even with a blocked CDN. */
+  function createEditor(host, opts) {
+    var fallback = createFallbackEditor(host, opts);
+    fallback.setFontSize(readEditorPrefs().fontSize);
+    var state = {
+      lang: opts.lang,
+      langRequest: opts.lang.id,
+      upgraded: false,
+      disposed: false,
+      monaco: null,
+      instance: null,
+      decorations: [],
+      suppress: false,
+      errors: []
+    };
+
+    fallback.el.setAttribute("data-engine", "fallback");
+    fallback.el.setAttribute("data-editor-loading", "true");
+    if (opts.compact) fallback.el.classList.add("ed--compact");
+
+    var facade = {
+      el: fallback.el,
+      engine: "fallback",
+      get value() {
+        return state.instance ? state.instance.getValue() : fallback.value;
+      },
+      set value(v) {
+        v = v == null ? "" : String(v);
+        if (state.instance) {
+          state.suppress = true;
+          state.instance.setValue(v);
+          state.suppress = false;
+          state.errors = [];
+          applyDecorations();
+        } else {
+          fallback.value = v;
+        }
+      },
+      setLang: function (l) {
+        state.lang = l;
+        state.langRequest = l.id;
+        fallback.setLang(l);
+        if (state.monaco && state.instance) {
+          var model = state.instance.getModel();
+          state.monaco.editor.setModelLanguage(model, monacoLangId(l.id));
+          state.instance.updateOptions({ tabSize: l.indent || 4 });
+          /* The tokenizer/configuration loads on demand. Re-apply the mode
+             only if this is still the newest request, so rapid switching
+             cannot leave an older language in place. */
+          ensureMonacoLanguageConfig(state.monaco, l.id).then(function () {
+            if (state.disposed || !state.instance || state.langRequest !== l.id) return;
+            state.monaco.editor.setModelLanguage(state.instance.getModel(), monacoLangId(l.id));
+          });
+        }
+      },
+      setErrors: function (lines) {
+        state.errors = lines || [];
+        if (state.instance) applyDecorations();
+        else fallback.setErrors(state.errors);
+      },
+      clearErrors: function () {
+        state.errors = [];
+        if (state.instance) applyDecorations();
+        else fallback.clearErrors();
+      },
+      setFontSize: function (px) {
+        px = Math.min(EDITOR_FONT_MAX, Math.max(EDITOR_FONT_MIN, px));
+        fallback.setFontSize(px);
+        if (state.instance) {
+          state.instance.updateOptions({ fontSize: px, lineHeight: Math.round(px * 1.6) });
+        }
+      },
+      setWrap: function (on) {
+        if (!state.instance) return false;
+        state.instance.updateOptions({ wordWrap: on ? "on" : "off" });
+        return true;
+      },
+      getSelection: function () {
+        if (state.instance) {
+          var sel = state.instance.getSelection();
+          var model = state.instance.getModel();
+          if (sel && model) {
+            return {
+              start: model.getOffsetAt(sel.getStartPosition()),
+              end: model.getOffsetAt(sel.getEndPosition()),
+              focused: state.instance.hasTextFocus()
+            };
+          }
+        }
+        return fallback.getSelection();
+      },
+      format: function () {
+        if (state.instance) {
+          var model = state.instance.getModel();
+          var formatted = reindentCode(state.instance.getValue(), state.lang);
+          if (formatted === state.instance.getValue()) return;
+          state.errors = [];
+          applyDecorations();
+          state.instance.pushUndoStop();
+          state.instance.executeEdits("dslab.format", [{
+            range: model.getFullModelRange(),
+            text: formatted,
+            forceMoveMarkers: true
+          }]);
+          state.instance.pushUndoStop();
+        } else {
+          fallback.format();
+        }
+      },
+      focus: function () {
+        if (state.instance) state.instance.focus();
+        else fallback.focus();
+      },
+      layout: function () {
+        if (state.instance) state.instance.layout();
+        else fallback.layout();
+      },
+      dispose: function () {
+        state.disposed = true;
+        if (state.instance) {
+          try { state.instance.dispose(); } catch (e) { /* ignore */ }
+          state.instance = null;
+          state.monaco = null;
+        }
+        fallback.dispose();
+      }
+    };
+
+    function applyDecorations() {
+      if (!state.instance) return;
+      var lineCount = state.instance.getModel().getLineCount();
+      state.decorations = state.instance.deltaDecorations(state.decorations, state.errors
+        .filter(function (line) { return line > 0 && line <= lineCount; })
+        .map(function (line) {
+          return {
+            range: new state.monaco.Range(line, 1, line, 1),
+            options: {
+              isWholeLine: true,
+              className: "ed-line-error",
+              linesDecorationsClassName: "ed-line-error-gutter"
+            }
+          };
+        }));
+      if (state.errors.length) {
+        try { state.instance.revealLineInCenterIfOutsideViewport(state.errors[0]); } catch (e) { /* ignore */ }
+      }
+    }
+
+    function upgrade(m) {
+      if (state.disposed) return;
+      if (!fallback.el.isConnected) {
+        facade.dispose();
+        return;
+      }
+      var value = fallback.value;
+      var selection = fallback.getSelection();
+      var prefs = readEditorPrefs();
+
+      state.upgraded = true;
+      fallback.el.innerHTML = "";
+      fallback.el.classList.add("ed--monaco");
+      fallback.el.removeAttribute("data-editor-loading");
+      fallback.el.setAttribute("data-engine", "monaco");
+
+      var surface = document.createElement("div");
+      surface.className = "ed__monaco";
+      fallback.el.appendChild(surface);
+
+      var instance = m.editor.create(surface, {
+        value: value,
+        language: monacoLangId(state.lang.id),
+        theme: monacoThemeName(),
+        fontFamily: '"JetBrains Mono", "Cascadia Code", Consolas, "SFMono-Regular", ui-monospace, Menlo, monospace',
+        fontSize: prefs.fontSize,
+        lineHeight: Math.round(prefs.fontSize * 1.6),
+        tabSize: state.lang.indent || 4,
+        insertSpaces: true,
+        detectIndentation: false,
+        automaticLayout: true,
+        lineNumbers: "on",
+        lineNumbersMinChars: 3,
+        glyphMargin: false,
+        folding: true,
+        showFoldingControls: "mouseover",
+        minimap: { enabled: false },
+        renderLineHighlight: "all",
+        renderLineHighlightOnlyWhenFocus: false,
+        cursorBlinking: "blink",
+        cursorSmoothCaretAnimation: "on",
+        cursorWidth: 2,
+        matchBrackets: "always",
+        autoClosingBrackets: "always",
+        autoClosingQuotes: "always",
+        autoIndent: "full",
+        formatOnPaste: false,
+        formatOnType: false,
+        wordWrap: prefs.wrap ? "on" : "off",
+        wordWrapColumn: 110,
+        scrollBeyondLastLine: false,
+        smoothScrolling: true,
+        mouseWheelZoom: false,
+        quickSuggestions: { other: true, comments: false, strings: false },
+        suggestOnTriggerCharacters: true,
+        acceptSuggestionOnEnter: "smart",
+        tabCompletion: "on",
+        snippetSuggestions: "inline",
+        fixedOverflowWidgets: true,
+        bracketPairColorization: { enabled: true },
+        guides: { indentation: true, bracketPairs: true },
+        padding: { top: 12, bottom: 12 },
+        scrollbar: { verticalScrollbarSize: 11, horizontalScrollbarSize: 11, useShadows: false },
+        overviewRulerLanes: 0,
+        hideCursorInOverviewRuler: true,
+        renderWhitespace: "selection",
+        accessibilitySupport: "auto"
+      });
+
+      state.monaco = m;
+      state.instance = instance;
+      facade.engine = "monaco";
+
+      if (selection && selection.start != null) {
+        var model = instance.getModel();
+        var length = model.getValue().length;
+        var start = model.getPositionAt(Math.min(selection.start, length));
+        var end = model.getPositionAt(Math.min(Math.max(selection.end, selection.start), length));
+        instance.setSelection({
+          startLineNumber: start.lineNumber, startColumn: start.column,
+          endLineNumber: end.lineNumber, endColumn: end.column
+        });
+        instance.revealPositionInCenterIfOutsideViewport(start);
+      }
+
+      instance.onDidChangeModelContent(function () {
+        if (state.suppress) return;
+        state.errors = [];
+        applyDecorations();
+        if (opts.onChange) opts.onChange(instance.getValue());
+      });
+
+      instance.addAction({
+        id: "dslab.run",
+        label: "Run code",
+        keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.Enter, m.KeyCode.F5],
+        run: function () { if (opts.onRun) opts.onRun(); }
+      });
+      instance.addAction({
+        id: "dslab.save",
+        label: "Save file",
+        keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KeyS],
+        run: function () { if (opts.onSave) opts.onSave(); }
+      });
+      instance.addAction({
+        id: "dslab.redo",
+        label: "Redo",
+        keybindings: [m.KeyMod.CtrlCmd | m.KeyCode.KeyY],
+        run: function (ed) { ed.trigger("dslab", "redo", null); }
+      });
+
+      applyDecorations();
+      if (opts.onEngine) opts.onEngine("monaco");
+      setTimeout(function () {
+        if (!state.instance) return;
+        state.instance.layout();
+        if (selection && selection.focused) state.instance.focus();
+      }, 0);
+    }
+
+    if (opts.onEngine) opts.onEngine("loading");
+    loadMonaco().then(function (m) {
+      return ensureMonacoLanguageConfig(m, state.lang.id).then(function () {
+        upgrade(m);
+      });
+    }).catch(function () {
+      if (state.disposed) return;
+      fallback.el.removeAttribute("data-editor-loading");
+      fallback.el.setAttribute("data-engine", "fallback");
+      if (!createEditor._warned) {
+        createEditor._warned = true;
+        toast("The advanced editor could not load. The built-in editor is still available.");
+      }
+      if (opts.onEngine) opts.onEngine("fallback");
+    });
+
+    return registerEditor(facade);
   }
 
   /* ===================================================================
@@ -1332,7 +2022,8 @@ self.onmessage = async function (ev) {
       mode: "code",
       running: false,
       fileId: store.activeId || null,
-      notebook: null
+      notebook: null,
+      notebookFileId: null
     };
 
     var editor = null;
@@ -1351,11 +2042,51 @@ self.onmessage = async function (ev) {
       }
       return editor ? editor.value : "";
     }
+    function cloneCellList(cells) {
+      if (!cells) return null;
+      return cells.map(function (c) {
+        return { id: c.id, code: c.code };
+      });
+    }
+    function cloneNotebookCells() {
+      return state.notebook ? cloneCellList(state.notebook.cells) : null;
+    }
+    function notebookFromFile(f) {
+      if (f && f.notebookCells && f.notebookCells.length) {
+        var joined = f.notebookCells.map(function (c) { return c.code; }).join("\n\n");
+        if (!f.code || joined === f.code) return { cells: cloneCellList(f.notebookCells) };
+      }
+      if (!f || !String(f.code || "").trim() || f.code === SAMPLES.python) {
+        return newNotebook();
+      }
+      return { cells: [{ id: uid(), code: f.code }] };
+    }
+    var saveTimer = null;
     function persist() { writeStore(store); }
     function markModified() {
       var f = activeFile();
       if (!f) return;
+      var code = currentCode();
+      if (state.mode === "notebook" && state.notebook) {
+        f.notebookCells = cloneNotebookCells();
+      } else if (f.notebookCells &&
+          f.notebookCells.map(function (c) { return c.code; }).join("\n\n") !== code) {
+        f.notebookCells = null;
+        f.savedNotebookCells = null;
+      }
+      f.code = code;
       f.modified = Date.now();
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(function () {
+        saveTimer = null;
+        persist();
+        if (els.fileMeta) paintFileMeta();
+      }, 320);
+    }
+    function flushAutosave() {
+      if (!saveTimer) return;
+      clearTimeout(saveTimer);
+      saveTimer = null;
       persist();
     }
 
@@ -1416,9 +2147,24 @@ self.onmessage = async function (ev) {
                 '<span class="lab2-panel__title" id="fileName">Untitled</span>' +
                 '<span class="lab2-panel__meta" id="fileMeta"></span>' +
                 '<span class="lab2-panel__spacer"></span>' +
-                '<button class="lab2-mini" type="button" id="fmtBtn" title="Re-indent the code">Format</button>' +
-                '<button class="lab2-mini" type="button" id="copyBtn" title="Copy all code">' + ICON.copy + "</button>" +
-                '<button class="lab2-mini" type="button" id="clearBtn" title="Clear the editor">Clear</button>' +
+                '<div class="lab2-tools" role="toolbar" aria-label="Editor tools">' +
+                  '<button class="lab2-mini" type="button" id="fmtBtn" title="Re-indent the code">Format</button>' +
+                  '<button class="lab2-mini" type="button" id="wrapBtn" aria-pressed="false" ' +
+                    'title="Toggle word wrap">Wrap</button>' +
+                  '<div class="lab2-font" role="group" aria-label="Editor font size">' +
+                    '<button class="lab2-mini lab2-font__step" type="button" id="fontDown" ' +
+                      'aria-label="Decrease editor font size" title="Decrease font size">A&minus;</button>' +
+                    '<span class="lab2-font__value" id="fontVal" aria-live="polite">14</span>' +
+                    '<button class="lab2-mini lab2-font__step" type="button" id="fontUp" ' +
+                      'aria-label="Increase editor font size" title="Increase font size">A+</button>' +
+                  "</div>" +
+                  '<button class="lab2-mini lab2-tool-icon" type="button" id="copyBtn" ' +
+                    'aria-label="Copy all code" title="Copy all code">' + ICON.copy + "</button>" +
+                  '<button class="lab2-mini lab2-tool-icon" type="button" id="fsBtn" aria-pressed="false" ' +
+                    'aria-label="Full screen editor" title="Full screen editor (Esc to exit)">' + ICON.expand + "</button>" +
+                  '<button class="lab2-mini" type="button" id="resetBtn" ' +
+                    'title="Reset to the starter program">Reset</button>' +
+                "</div>" +
               "</div>" +
               '<div class="lab2-editor" id="editorHost"></div>' +
             "</div>" +
@@ -1451,6 +2197,7 @@ self.onmessage = async function (ev) {
           "Nothing to install. Python, JavaScript, SQL, HTML and CSS run entirely on this device. " +
           "Compiled languages upload the source to a remote sandbox to be built and run." +
           "<br><kbd>Ctrl</kbd>+<kbd>Enter</kbd> run &middot; <kbd>Ctrl</kbd>+<kbd>S</kbd> save &middot; " +
+          "<kbd>Ctrl</kbd>+<kbd>F</kbd> find &middot; <kbd>Ctrl</kbd>+<kbd>/</kbd> comment &middot; " +
           "<kbd>Tab</kbd> indent &middot; <kbd>F5</kbd> run" +
         "</div>" +
       "</div>";
@@ -1696,10 +2443,39 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       ]};
     }
 
-    function renderNotebook() {
-      if (!state.notebook) state.notebook = newNotebook();
-      var host = els.notebookHost;
+    /* Delegated once on the persistent notebook container. Adding a new
+       listener inside renderNotebook made every rerender fire cell actions
+       once per previous render. */
+    function onNotebookClick(e) {
+      var run = e.target.closest("[data-runcell]");
+      var del = e.target.closest("[data-delcell]");
+      var mv = e.target.closest("[data-movecell]");
+      if (run) {
+        runCell(parseInt(run.getAttribute("data-runcell"), 10));
+      } else if (del) {
+        state.notebook.cells.splice(parseInt(del.getAttribute("data-delcell"), 10), 1);
+        if (!state.notebook.cells.length) state.notebook.cells.push({ id: uid(), code: "" });
+        renderNotebook();
+      } else if (mv) {
+        var mi = parseInt(mv.getAttribute("data-movecell"), 10);
+        var dir = parseInt(mv.getAttribute("data-dir"), 10);
+        var arr = state.notebook.cells;
+        var to = mi + dir;
+        if (to >= 0 && to < arr.length) {
+          var tmp = arr[mi];
+          arr[mi] = arr[to];
+          arr[to] = tmp;
+          renderNotebook();
+        }
+      }
+    }
 
+    function renderNotebook() {
+      if (!state.notebook || state.notebookFileId !== state.fileId) {
+        state.notebook = notebookFromFile(activeFile());
+        state.notebookFileId = state.fileId;
+      }
+      var host = els.notebookHost;
       host.innerHTML =
         '<div class="nb__bar">' +
           '<span class="nb__title">Python Notebook</span>' +
@@ -1731,37 +2507,16 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       state.notebook.cells.forEach(function (c, i) {
         var h = document.getElementById("cellHost_" + i);
         if (!h) return;
-        createEditor(h, {
+        var cellEditor = createEditor(h, {
           lang: L.python,
           ariaLabel: "Notebook cell " + (i + 1),
-          onChange: function (v) { state.notebook.cells[i].code = v; },
+          compact: true,
+          onChange: function (v) { state.notebook.cells[i].code = v; markModified(); },
           onRun: function () { runCell(i); }
         });
+        cellEditor.value = c.code;
       });
-
-      host.addEventListener("click", function (e) {
-        var run = e.target.closest("[data-runcell]");
-        var del = e.target.closest("[data-delcell]");
-        var mv = e.target.closest("[data-movecell]");
-        if (run) {
-          runCell(parseInt(run.getAttribute("data-runcell"), 10));
-        } else if (del) {
-          state.notebook.cells.splice(parseInt(del.getAttribute("data-delcell"), 10), 1);
-          if (!state.notebook.cells.length) state.notebook.cells.push({ id: uid(), code: "" });
-          renderNotebook();
-        } else if (mv) {
-          var mi = parseInt(mv.getAttribute("data-movecell"), 10);
-          var dir = parseInt(mv.getAttribute("data-dir"), 10);
-          var arr = state.notebook.cells;
-          var to = mi + dir;
-          if (to >= 0 && to < arr.length) {
-            var tmp = arr[mi];
-            arr[mi] = arr[to];
-            arr[to] = tmp;
-            renderNotebook();
-          }
-        }
-      });
+      setTimeout(function () { forEachLiveEditor(function () {}); }, 0);
 
       var runAll = document.getElementById("nbRunAll");
       if (runAll) runAll.addEventListener("click", runAllCells);
@@ -1834,7 +2589,7 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
 
     function pushVersion(f) {
       if (!f.versions) f.versions = [];
-      f.versions.push({ at: Date.now(), code: f.code || "" });
+      f.versions.push({ at: Date.now(), code: f.savedCode != null ? f.savedCode : (f.code || "") });
       if (f.versions.length > MAX_VERSIONS) {
         f.versions.splice(0, f.versions.length - MAX_VERSIONS);
       }
@@ -1845,7 +2600,9 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       if (!f) { saveAs(); return; }
       pushVersion(f);
       f.code = currentCode();
+      f.savedCode = f.code;
       f.modified = Date.now();
+      flushAutosave();
       persist();
       paintFileMeta();
       paintTree();
@@ -1858,8 +2615,10 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       if (f) {
         pushVersion(f);
         f.code = src;
+        f.savedCode = src;
         f.modified = Date.now();
         if (!/\.(py|ipynb|txt)$/i.test(f.name)) f.name = f.name.replace(/\.[^.]+$/, "") + ".py";
+        flushAutosave();
         persist();
         paintFileMeta();
         paintTree();
@@ -1886,9 +2645,10 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       }
 
       var now = Date.now();
+      var code = presetCode != null ? presetCode : currentCode();
       var file = {
         id: uid(), type: "file", name: name, lang: langId,
-        code: presetCode != null ? presetCode : currentCode(),
+        code: code, savedCode: code,
         created: now, modified: now, versions: []
       };
 
@@ -1967,9 +2727,10 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       name = String(name).trim();
       if (!name) return;
       var now = Date.now();
+      var code = SAMPLES[state.langId] || "";
       var file = {
         id: uid(), type: "file", name: name, lang: state.langId,
-        code: SAMPLES[state.langId] || "",
+        code: code, savedCode: code,
         created: now, modified: now, versions: []
       };
       store.root.children.push(file);
@@ -2006,8 +2767,10 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       if (!yes) return;
       if (editor) editor.value = v.code;
       f.code = v.code;
+      f.savedCode = v.code;
       persist();
       paintFileMeta();
+      paintTree();
       toast("Version restored");
       });
     }
@@ -2021,7 +2784,12 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       els.modeNotebook.classList.toggle("is-on", isNb);
       els.editorPanel.hidden = isNb;
       els.notebookHost.hidden = !isNb;
-      if (isNb) renderNotebook();
+      if (isNb) {
+        setFullscreen(false);
+        renderNotebook();
+      } else if (editor) {
+        setTimeout(function () { editor.layout(); }, 40);
+      }
     }
 
     function openFile(id) {
@@ -2031,6 +2799,7 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       state.fileId = id;
       store.activeId = id;
       state.langId = hit.node.lang || "python";
+      if (hit.node.savedCode == null) hit.node.savedCode = hit.node.code || "";
       persist();
 
       if (editor) {
@@ -2042,12 +2811,96 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       els.stdinBox.value = STDIN_DEFAULT[state.langId] || "";
 
       els.modeNotebook.disabled = !lang().notebook;
-      if (!lang().notebook && state.mode === "notebook") setMode("code");
+      if (!lang().notebook && state.mode === "notebook") {
+        setMode("code");
+      } else if (state.mode === "notebook") {
+        state.notebook = notebookFromFile(hit.node);
+        state.notebookFileId = id;
+        renderNotebook();
+      }
 
       setIdle("Ready. Press Run code.");
       paintBanner();
       paintFileMeta();
       paintTree();
+    }
+
+    function paintEditorControls() {
+      var prefs = readEditorPrefs();
+      if (els.fontVal) els.fontVal.textContent = prefs.fontSize;
+      if (els.fontDown) els.fontDown.disabled = prefs.fontSize <= EDITOR_FONT_MIN;
+      if (els.fontUp) els.fontUp.disabled = prefs.fontSize >= EDITOR_FONT_MAX;
+      if (els.wrapBtn) {
+        var engine = editor ? editor.engine : "loading";
+        els.wrapBtn.disabled = engine !== "monaco";
+        els.wrapBtn.classList.toggle("is-on", !!prefs.wrap);
+        els.wrapBtn.setAttribute("aria-pressed", prefs.wrap ? "true" : "false");
+        els.wrapBtn.title = engine === "monaco"
+          ? (prefs.wrap ? "Disable word wrap" : "Enable word wrap")
+          : "Word wrap is available when the advanced editor has loaded";
+      }
+    }
+
+    function changeFont(delta) {
+      var prefs = readEditorPrefs();
+      prefs.fontSize = Math.min(EDITOR_FONT_MAX, Math.max(EDITOR_FONT_MIN, prefs.fontSize + delta));
+      writeEditorPrefs(prefs);
+      forEachLiveEditor(function (ed) { ed.setFontSize(prefs.fontSize); });
+      paintEditorControls();
+    }
+
+    function toggleWrap() {
+      if (!editor || editor.engine !== "monaco") return;
+      var prefs = readEditorPrefs();
+      prefs.wrap = !prefs.wrap;
+      writeEditorPrefs(prefs);
+      forEachLiveEditor(function (ed) { ed.setWrap(prefs.wrap); });
+      paintEditorControls();
+    }
+
+    function setFullscreen(on) {
+      on = !!on;
+      els.editorPanel.classList.toggle("lab2-panel--fs", on);
+      document.body.classList.toggle("lab2-fs-open", on);
+      if (els.fsBtn) {
+        els.fsBtn.setAttribute("aria-pressed", on ? "true" : "false");
+        els.fsBtn.innerHTML = on ? ICON.shrink : ICON.expand;
+        els.fsBtn.title = on ? "Exit full screen (Esc)" : "Full screen editor";
+        els.fsBtn.setAttribute("aria-label", on ? "Exit full screen editor" : "Full screen editor");
+      }
+      if (editor) {
+        setTimeout(function () {
+          try {
+            editor.layout();
+            if (on) editor.focus();
+          } catch (e) { /* detached */ }
+        }, 60);
+      }
+    }
+
+    function resetCode() {
+      var target = SAMPLES[state.langId] || "";
+      function apply() {
+        if (state.mode === "notebook") {
+          state.notebook = newNotebook();
+          state.notebookFileId = state.fileId;
+          renderNotebook();
+          markModified();
+        } else if (editor) {
+          editor.value = target;
+          editor.clearErrors();
+          markModified();
+          editor.focus();
+        }
+        toast("Starter code restored");
+      }
+      if (currentCode() === target) { apply(); return; }
+      ask({
+        title: "Reset code",
+        message: "Replace the current " + lang().label +
+          " program with the starter code? Your current changes will be lost.",
+        ok: "Reset", cancel: "Keep", kind: "danger"
+      }).then(function (yes) { if (yes) apply(); });
     }
 
     function buildEditor() {
@@ -2057,9 +2910,11 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
         ariaLabel: "Code editor",
         onChange: markModified,
         onRun: run,
-        onSave: save
+        onSave: save,
+        onEngine: paintEditorControls
       });
       editorWrap = editor.el;
+      paintEditorControls();
     }
 
     /* ---------------------------------------------------------- wire */
@@ -2077,8 +2932,13 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       saveAsBtn: host.querySelector("#saveAsBtn"),
       fileMenuBtn: host.querySelector("#fileMenuBtn"),
       fmtBtn: host.querySelector("#fmtBtn"),
+      wrapBtn: host.querySelector("#wrapBtn"),
+      fontDown: host.querySelector("#fontDown"),
+      fontUp: host.querySelector("#fontUp"),
+      fontVal: host.querySelector("#fontVal"),
+      fsBtn: host.querySelector("#fsBtn"),
+      resetBtn: host.querySelector("#resetBtn"),
       copyBtn: host.querySelector("#copyBtn"),
-      clearBtn: host.querySelector("#clearBtn"),
       editorPanel: host.querySelector("#editorPanel"),
       editorHost: host.querySelector("#editorHost"),
       notebookHost: host.querySelector("#notebookHost"),
@@ -2115,24 +2975,44 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
         toast("Clipboard is unavailable in this browser");
       }
     });
-    els.clearBtn.addEventListener("click", function () {
-      if (state.mode === "notebook") {
-        state.notebook = { cells: [{ id: uid(), code: "" }] };
-        renderNotebook();
-      } else if (editor) {
-        editor.value = "";
-        markModified();
-      }
+    els.wrapBtn.addEventListener("click", toggleWrap);
+    els.fontDown.addEventListener("click", function () { changeFont(-1); });
+    els.fontUp.addEventListener("click", function () { changeFont(1); });
+    els.fsBtn.addEventListener("click", function () {
+      setFullscreen(!els.editorPanel.classList.contains("lab2-panel--fs"));
     });
+    els.resetBtn.addEventListener("click", resetCode);
     host.querySelector("#clearOutBtn").addEventListener("click", function () {
       setIdle("Output cleared.");
     });
+
+    function onDocKeydown(e) {
+      if (e.key !== "Escape" || !host.isConnected) return;
+      if (e.defaultPrevented) return;
+      var dlg = document.querySelector(".lab2-dlg");
+      if (dlg && !dlg.hidden) return;
+      var find = document.querySelector(".monaco-editor .find-widget");
+      if (find && find.getBoundingClientRect().height > 0) return;
+      if (els.editorPanel.classList.contains("lab2-panel--fs")) {
+        e.preventDefault();
+        setFullscreen(false);
+      }
+    }
+    document.addEventListener("keydown", onDocKeydown);
 
     els.langSelect.addEventListener("change", function () {
       var id = els.langSelect.value;
       state.langId = id;
       els.stdinBox.value = STDIN_DEFAULT[id] || "";
       if (editor) editor.setLang(L[id]);
+      var f = activeFile();
+      if (f && f.lang !== id) {
+        f.lang = id;
+        f.modified = Date.now();
+        persist();
+        paintFileMeta();
+        paintTree();
+      }
       els.modeNotebook.disabled = !L[id].notebook;
       if (!L[id].notebook && state.mode === "notebook") setMode("code");
       if (state.mode === "notebook") renderNotebook();
@@ -2142,6 +3022,7 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
 
     els.modeCode.addEventListener("click", function () { setMode("code"); });
     els.modeNotebook.addEventListener("click", function () { setMode("notebook"); });
+    els.notebookHost.addEventListener("click", onNotebookClick);
 
     els.fileMenuBtn.addEventListener("click", function () {
       els.drawer.hidden = !els.drawer.hidden;
@@ -2192,7 +3073,8 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
         var stamp = Date.now();
         var scratch = {
           id: uid(), type: "file", name: label + ".py", lang: "python",
-          code: carried, created: stamp, modified: stamp, versions: []
+          code: carried, savedCode: carried,
+          created: stamp, modified: stamp, versions: []
         };
         store.root.children = store.root.children || [];
         store.root.children.push(scratch);
@@ -2215,6 +3097,24 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       if (pyFile) openFile(pyFile.id);
       else { paintBanner(); paintFileMeta(); paintTree(); setIdle("Ready. Press Run code."); }
     }
+
+    /* Give the Code Run page more room than content pages, and tidy up on route change. */
+    var viewEl = host.closest ? host.closest(".view") : null;
+    if (viewEl) {
+      viewEl.classList.add("view--codelab");
+      var cleanupObserver = new MutationObserver(function () {
+        if (host.isConnected) return;
+        flushAutosave();
+        setFullscreen(false);
+        if (!viewEl.querySelector(".lab2")) viewEl.classList.remove("view--codelab");
+        if (editor) editor.dispose();
+        cleanupObserver.disconnect();
+      });
+      cleanupObserver.observe(viewEl, { childList: true });
+    }
+    window.addEventListener("pagehide", function () {
+      if (host.isConnected) flushAutosave();
+    });
 
     /* Preload the Python runtime so the first Run is not a long download. */
     if (lang().engine === "pyodide") {

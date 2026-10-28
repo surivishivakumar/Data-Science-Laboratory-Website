@@ -81,7 +81,16 @@
     linkedin: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5A2.5 2.5 0 1 0 5 8.5a2.5 2.5 0 0 0 0-5ZM3 9h4v12H3V9Zm7 0h3.8v1.71h.05c.53-1 1.83-2.06 3.76-2.06C21.4 8.65 22 11 22 14.02V21h-4v-6.2c0-1.48-.03-3.39-2.06-3.39-2.07 0-2.39 1.61-2.39 3.28V21h-4V9Z"/></svg>',
     instagram: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23a3.7 3.7 0 0 1-.9 1.38c-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 0 1-1.38-.9 3.7 3.7 0 0 1-.9-1.38c-.16-.42-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23a3.7 3.7 0 0 1 .9-1.38c.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16Zm0 1.8c-3.15 0-3.5.01-4.74.07-.9.04-1.38.19-1.71.32-.43.17-.74.37-1.06.69-.32.32-.52.63-.69 1.06-.13.32-.28.8-.32 1.71-.06 1.24-.07 1.59-.07 4.74s.01 3.5.07 4.74c.04.9.19 1.38.32 1.71.17.43.37.74.69 1.06.32.32.63.52 1.06.69.32.13.8.28 1.71.32 1.24.06 1.59.07 4.74.07s3.5-.01 4.74-.07c.9-.04 1.38-.19 1.71-.32.43-.17.74-.37 1.06-.69.32-.32.52-.63.69-1.06.13-.32.28-.8.32-1.71.06-1.24.07-1.59.07-4.74s-.01-3.5-.07-4.74c-.04-.9-.19-1.38-.32-1.71a2.86 2.86 0 0 0-.69-1.06 2.86 2.86 0 0 0-1.06-.69c-.32-.13-.8-.28-1.71-.32-1.24-.06-1.59-.07-4.74-.07Zm0 3.07a4.98 4.98 0 1 1 0 9.95 4.98 4.98 0 0 1 0-9.95Zm0 1.8a3.18 3.18 0 1 0 0 6.36 3.18 3.18 0 0 0 0-6.36Zm5.17-3.07a1.16 1.16 0 1 1 0 2.33 1.16 1.16 0 0 1 0-2.33Z"/></svg>',
     external: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-8.5 8.5M18 14v5a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19V7.5A1.5 1.5 0 0 1 5 6h5"/></svg>',
-    doc: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a1.8 1.8 0 0 0-1.8 1.8v14.4A1.8 1.8 0 0 0 7 21h10a1.8 1.8 0 0 0 1.8-1.8V7.8L14 3Z"/><path d="M13.8 3v5h5M8.6 12.6h6.8M8.6 16.4h4.8"/></svg>'
+    doc: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a1.8 1.8 0 0 0-1.8 1.8v14.4A1.8 1.8 0 0 0 7 21h10a1.8 1.8 0 0 0 1.8-1.8V7.8L14 3Z"/><path d="M13.8 3v5h5M8.6 12.6h6.8M8.6 16.4h4.8"/></svg>',
+    /* Dashboard summary + navigation icons (consistent 1.7-1.8 stroke). */
+    flask: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 3h5"/><path d="M10.25 3v6.2L5.6 17.4A2 2 0 0 0 7.35 20.5h9.3a2 2 0 0 0 1.75-3.1L13.75 9.2V3"/><path d="M7.4 15h9.2"/></svg>',
+    book: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22V4.5Z"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/></svg>',
+    checkCircle: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12.2 2.6 2.6L16 9.2"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.4V12l3 2"/></svg>',
+    home: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5 12 3.5l8.5 7"/><path d="M5.5 9.6V20h13V9.6"/><path d="M10 20v-5h4v5"/></svg>',
+    code: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8.5 8-4 4 4 4"/><path d="m15.5 8 4 4-4 4"/><path d="m13.5 5-3 14"/></svg>',
+    layers: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></svg>',
+    wrench: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-2.5 2-2Z"/></svg>'
   };
 
   /* ---------------------------------------------------------------------
@@ -91,12 +100,12 @@
     [
       "(?<com>#[^\\n]*)",
       "(?<tri>\"\"\"[\\s\\S]*?\"\"\"|'''[\\s\\S]*?''')",
-      "(?<str>[fFrRbB]{0,2}\"(?:\\\\.|[^\"\\\\])*\"|[fFrRbB]{0,2}'(?:\\\\.|[^'\\\\])*')",
+      "(?<str>[fFrRbBuU]{0,2}[rR]{0,2}\"(?:\\\\.|[^\"\\\\])*\"|[fFrRbBuU]{0,2}[rR]{0,2}'(?:\\\\.|[^'\\\\])*')",
       "(?<dec>@[A-Za-z_][\\w.]*)",
       "(?<mag>![A-Za-z_]\\w*)",
       "(?<num>\\b0[xXbBoO][0-9a-fA-F_]+\\b|\\b\\d[\\d_]*\\.?[\\d_]*(?:[eE][+-]?\\d+)?\\b)",
       "(?<kw>\\b(?:and|as|assert|async|await|break|case|class|continue|def|del|elif|else|except|False|finally|for|from|global|if|import|in|is|lambda|match|None|nonlocal|not|or|pass|raise|return|True|try|while|with|yield)\\b)",
-      "(?<bi>\\b(?:abs|all|any|bool|dict|enumerate|filter|float|format|frozenset|getattr|hasattr|input|int|isinstance|iter|len|list|map|max|min|next|open|print|range|repr|reversed|round|set|setattr|sorted|str|sum|tuple|type|zip|json|os|re|sys|requests|sqlite3|pd|np|plt|sns|requests|conn|cursor|fig|ax|db|df|text|ax0|ax1)\\b)",
+      "(?<bi>\\b(?:abs|all|any|bool|dict|enumerate|filter|float|format|frozenset|getattr|hasattr|input|int|isinstance|iter|len|list|map|max|min|next|open|print|range|repr|reversed|round|set|setattr|sorted|str|sum|tuple|type|zip|json|os|re|sys|requests|sqlite3|pd|np|plt|sns|requests|conn|cursor|fig|ax|db|df|text|ax0|ax1|BeautifulSoup|urllib|urlopen)\\b)",
       "(?<fn>\\b[A-Za-z_]\\w*(?=\\s*\\())",
       "(?<id>\\b[A-Za-z_]\\w*\\b)",
       "(?<pun>[{}()\\[\\].,:;=+\\-*/%<>!&|^~$?]+)"
@@ -543,6 +552,156 @@
     const stored = writeExpStore(store);
     rebuildExperiments();
     return stored;
+  }
+
+  /* ---------------------------------------------------------------------
+     1d. PROGRESS TRACKING  (drives the dashboard summary cards)
+     ---------------------------------------------------------------------
+     A "practical" is one part of an experiment (Ex 1 part A, part B ...).
+     Opening a part marks it complete; the flag is kept in localStorage so
+     the dashboard can show how much of the laboratory is finished. This is
+     purely a convenience layer - it never hides or changes experiment data. */
+  const PROGRESS_KEY = "dslab.progress.v1";
+
+  function readProgress() {
+    try {
+      const raw = localStorage.getItem(PROGRESS_KEY);
+      const data = raw ? JSON.parse(raw) : null;
+      return data && typeof data === "object" ? data : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function writeProgress(data) {
+    try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(data)); } catch (e) { /* ignore */ }
+  }
+
+  function progressKey(expId, sectionId) {
+    return expKey(expId) + ":" + String(sectionId);
+  }
+
+  function markSectionDone(expId, sectionId) {
+    const data = readProgress();
+    const key = progressKey(expId, sectionId);
+    if (!data[key]) { data[key] = Date.now(); writeProgress(data); }
+  }
+
+  function clearProgress() {
+    try { localStorage.removeItem(PROGRESS_KEY); } catch (e) { /* ignore */ }
+  }
+
+  /* Counts every part across the live experiment list and how many are done. */
+  function computeStats() {
+    const progress = readProgress();
+    let parts = 0;
+    let done = 0;
+    let completedExperiments = 0;
+
+    experiments.forEach(function (experiment) {
+      const sections = experiment.sections || [];
+      let expDone = 0;
+      sections.forEach(function (section) {
+        if (progress[progressKey(experiment.id, section.id)]) expDone++;
+      });
+      parts += sections.length;
+      done += expDone;
+      if (sections.length && expDone === sections.length) completedExperiments++;
+    });
+
+    return {
+      experiments: experiments.length,
+      modules: modules.length,
+      parts: parts,
+      done: done,
+      pending: parts - done,
+      completedExperiments: completedExperiments
+    };
+  }
+
+  /* ---------------------------------------------------------------------
+     1e. DASHBOARD SUMMARY CARDS
+     --------------------------------------------------------------------- */
+  function statCardHtml(icon, tone, value, label, sub, code) {
+    return (
+      '<article class="stat-card stat-card--' + tone + (code ? " stat-card--code" : "") + '">' +
+        '<span class="stat-card__icon">' + icon + "</span>" +
+        '<span class="stat-card__value">' + esc(value) + "</span>" +
+        '<span class="stat-card__label">' + esc(label) + "</span>" +
+        '<span class="stat-card__sub">' + esc(sub) + "</span>" +
+      "</article>"
+    );
+  }
+
+  function statsCardsHtml() {
+    const s = computeStats();
+    const parts = s.parts;
+    return (
+      statCardHtml(ICON.flask, "accent", String(s.experiments), "Total Experiments",
+        plural(s.modules, "module") + " in the syllabus") +
+      statCardHtml(ICON.book, "gold", labMeta.subjectCode, "Subject",
+        labMeta.academicYear + " \u00b7 " + plural(s.modules, "module"), true) +
+      statCardHtml(ICON.checkCircle, "green", String(s.done), "Completed Practicals",
+        "of " + plural(parts, "part")) +
+      statCardHtml(ICON.clock, "indigo", String(s.pending), "Pending Practicals",
+        "of " + plural(parts, "part"))
+    );
+  }
+
+  /* ---------------------------------------------------------------------
+     1f. EXPERIMENT CARD
+     ---------------------------------------------------------------------
+     One shared builder so the initial grid and the live search results stay
+     identical. `query` is only used to highlight the matched title text. */
+  function experimentCardHtml(experiment, query) {
+    const sections = experiment.sections || [];
+    const total = sections.length;
+    const progress = readProgress();
+    let done = 0;
+    sections.forEach(function (section) {
+      if (progress[progressKey(experiment.id, section.id)]) done++;
+    });
+
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    const mod = effectiveModule(experiment);
+    const status = done === 0 ? "Not started" : (done === total ? "Completed" : "In progress");
+    const statusClass = done === 0 ? "is-idle" : (done === total ? "is-done" : "is-progress");
+
+    return (
+      '<article class="exp-card" data-exp-card="' + esc(experiment.id) + '" tabindex="0" role="button" ' +
+        'aria-label="Open preview of Experiment ' + esc(experiment.id) + ", " + esc(experiment.name) + '">' +
+
+        '<div class="exp-card__head">' +
+          '<span class="exp-card__num">' + esc(experiment.id) + "</span>" +
+          '<div class="exp-card__heading">' +
+            '<h3 class="exp-card__name">' + (query ? highlightMatch(experiment.name, query) : esc(experiment.name)) + "</h3>" +
+            '<p class="exp-card__tag">' + esc(experiment.tagline || "") + "</p>" +
+          "</div>" +
+        "</div>" +
+
+        '<div class="exp-card__meta">' +
+          '<span class="chip chip--accent">' + esc(labMeta.subjectCode) + "</span>" +
+          (mod ? '<span class="chip chip--gold">Module ' + esc(mod) + "</span>" : "") +
+          '<span class="chip">' + plural(total, "part") + "</span>" +
+        "</div>" +
+
+        '<div class="exp-card__progress">' +
+          '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" ' +
+            'aria-valuenow="' + pct + '" aria-label="Experiment ' + esc(experiment.id) + " progress\">" +
+            '<span class="progress__bar" style="width:' + pct + '%"></span>' +
+          "</div>" +
+          '<span class="exp-card__status ' + statusClass + '">' + esc(status) + "</span>" +
+        "</div>" +
+
+        '<div class="exp-card__foot">' +
+          '<span class="exp-card__parts">' + sections.map(function (section) {
+            return "<i>" + esc(section.letter) + "</i>";
+          }).join("") + "</span>" +
+          '<span class="exp-card__cta">Open' + ICON.arrowRight + "</span>" +
+        "</div>" +
+
+      "</article>"
+    );
   }
 
   /* ---- module / tools mapping -----------------------------------------
@@ -1949,52 +2108,106 @@
      --------------------------------------------------------------------- */
   function renderHome() {
     const cards = experiments
-      .map(function (e, i) {
-        return (
-          '<article class="exp-card" data-exp-card="' + e.id + '" ' +
-            'style="animation-delay:' + Math.min(i * 45, 400) + 'ms" tabindex="0" role="button" ' +
-            'aria-label="Open preview of Experiment ' + e.id + ", " + esc(e.name) + '">' +
-            '<div class="exp-card__top">' +
-              '<span class="exp-card__num">' + e.id + "</span>" +
-              '<h3 class="exp-card__name">' + esc(e.name) + "</h3>" +
-            "</div>" +
-            '<p class="exp-card__tag">' + esc(e.tagline || "") + "</p>" +
-            '<div class="exp-card__foot">' +
-              '<span class="chip">' + plural(e.sections.length, "part") + "</span>" +
-              '<span class="exp-card__parts">' + e.sections.map(function (s) {
-                return "<i>" + esc(s.letter) + "</i>";
-              }).join("") + "</span>" +
-            "</div>" +
-          "</article>"
-        );
-      })
+      .map(function (experiment) { return experimentCardHtml(experiment, ""); })
       .join("");
 
     return (
       '<div class="page stack">' +
 
         '<section class="lab-hero" id="dashboardTop">' +
-          '<div class="card univ-card">' +
-            '<h2 class="univ-card__lab">' + esc(laboratory.name) + "</h2>" +
-            '<p class="univ-card__code">Subject Code: <b>' + esc(labMeta.subjectCode) + "</b></p>" +
-            '<div class="univ-card__meta">' +
-              '<span class="chip chip--accent">' + esc(labMeta.academicYear) + "</span>" +
-              '<span class="chip">' + esc(labMeta.department) + "</span>" +
-            "</div>" +
-
-            '<div class="search" id="search">' +
-              '<div class="search__box">' +
-                '<span class="search__icon">' + ICON.search + "</span>" +
-                '<input class="search__input" id="searchInput" type="search" autocomplete="off" ' +
-                  'spellcheck="false" placeholder="Search Experiments..." aria-label="Search experiments" ' +
-                  'role="combobox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list">' +
-                '<button class="search__clear" id="searchClear" type="button" aria-label="Clear search">' + ICON.close + "</button>" +
+          '<div class="card univ-card univ-card--hero">' +
+            '<div class="univ-card__hero-content">' +
+              '<div class="univ-card__badge-row">' +
+                '<span class="eyebrow">Digital Laboratory Platform</span>' +
+                '<span class="chip chip--accent">' + esc(labMeta.subjectCode) + "</span>" +
               "</div>" +
-              '<div class="ac" id="searchResults" role="listbox" aria-label="Search suggestions"></div>' +
-              '<p class="search__hint">Press <kbd>/</kbd> to search &middot; <kbd>&uarr;</kbd><kbd>&darr;</kbd> to move &middot; <kbd>Enter</kbd> to open</p>' +
+              '<h1 class="univ-card__lab univ-card__lab--hero">' + esc(laboratory.name) + "</h1>" +
+              '<p class="univ-card__desc">An interactive data science laboratory platform with hands-on experiments, real-time code execution, and comprehensive learning resources designed for academic excellence.</p>" +
+              '<div class="univ-card__actions">' +
+                '<a class="btn btn--primary" href="#/catalogue" data-link>' + ICON.play + " Explore Experiments</a>" +
+                '<a class="btn btn--ghost" href="#/codelab" data-link>' + ICON.code + " Open Code Run</a>" +
+              "</div>" +
+              '<div class="univ-card__meta">' +
+                '<span class="chip">' + esc(labMeta.academicYear) + "</span>" +
+                '<span class="chip">' + esc(labMeta.department) + "</span>" +
+                '<span class="chip">' + experiments.length + " Experiments</span>" +
+              "</div>" +
+            "</div>" +
+            '<div class="univ-card__visual" aria-hidden="true">' +
+              '<div class="univ-card__orb univ-card__orb--1"></div>' +
+              '<div class="univ-card__orb univ-card__orb--2"></div>' +
+              '<svg class="univ-card__icon" viewBox="0 0 120 120" fill="none">' +
+                '<circle cx="60" cy="60" r="50" stroke="url(#grad1)" stroke-width="2" opacity="0.6"/>' +
+                '<circle cx="60" cy="60" r="35" stroke="url(#grad2)" stroke-width="1.5" opacity="0.4"/>' +
+                '<path d="M45 45 L75 45 L75 75 L45 75 Z" stroke="currentColor" stroke-width="2" fill="none"/>' +
+                '<path d="M52 55 L68 55 M52 62 L68 62 M52 69 L60 69" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' +
+                '<defs>' +
+                  '<linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">' +
+                    '<stop offset="0%" style="stop-color:#22d3ee;stop-opacity:1" />' +
+                    '<stop offset="100%" style="stop-color:#38bdf8;stop-opacity:1" />' +
+                  '</linearGradient>' +
+                  '<linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">' +
+                    '<stop offset="0%" style="stop-color:#38bdf8;stop-opacity:1" />' +
+                    '<stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />' +
+                  '</linearGradient>' +
+                '</defs>' +
+              '</svg>' +
             "</div>" +
           "</div>" +
-          studentCardHtml() +
+          '<div class="quick-access">' +
+            '<div class="quick-access__header">' +
+              '<h3 class="quick-access__title">Quick Access</h3>' +
+              '<p class="quick-access__subtitle">Navigate to key sections</p>' +
+            "</div>" +
+            '<div class="quick-access__grid">' +
+              '<a class="quick-card" href="#/catalogue" data-link>' +
+                '<div class="quick-card__icon">' + ICON.flask + "</div>" +
+                '<div class="quick-card__content">' +
+                  '<div class="quick-card__title">Experiments</div>' +
+                  '<div class="quick-card__desc">' + experiments.length + " hands-on labs</div>' +
+                "</div>" +
+              "</a>" +
+              '<a class="quick-card" href="#/codelab" data-link>' +
+                '<div class="quick-card__icon">' + ICON.code + "</div>" +
+                '<div class="quick-card__content">' +
+                  '<div class="quick-card__title">Code Run</div>' +
+                  '<div class="quick-card__desc">Online IDE</div>' +
+                "</div>" +
+              "</a>" +
+              '<a class="quick-card" href="#/modules" data-link>' +
+                '<div class="quick-card__icon">' + ICON.book + "</div>" +
+                '<div class="quick-card__content">' +
+                  '<div class="quick-card__title">Modules</div>' +
+                  '<div class="quick-card__desc">Course modules</div>' +
+                "</div>" +
+              "</a>" +
+              '<a class="quick-card" href="#/tools" data-link>' +
+                '<div class="quick-card__icon">' + ICON.wrench + "</div>" +
+                '<div class="quick-card__content">' +
+                  '<div class="quick-card__title">Tools</div>' +
+                  '<div class="quick-card__desc">Libraries & utilities</div>' +
+                "</div>" +
+              "</a>" +
+              '<a class="quick-card" href="#/resources" data-link>' +
+                '<div class="quick-card__icon">' + ICON.doc + "</div>" +
+                '<div class="quick-card__content">' +
+                  '<div class="quick-card__title">Resources</div>' +
+                  '<div class="quick-card__desc">Study materials</div>' +
+                "</div>" +
+              "</a>" +
+              '<a class="quick-card" href="#/projects" data-link>' +
+                '<div class="quick-card__icon">' + ICON.layers + "</div>" +
+                '<div class="quick-card__content">' +
+                  '<div class="quick-card__title">Projects</div>' +
+                  '<div class="quick-card__desc">Case studies</div>' +
+                "</div>" +
+              "</a>" +
+            "</div>" +
+          "</div>" +
+        "</section>" +
+
+        '<section class="dash-stats" aria-label="Laboratory summary">' +
+          statsCardsHtml() +
         "</section>" +
 
         '<section id="catalogue">' +
@@ -2111,24 +2324,7 @@
       }
 
       grid.innerHTML = visible
-        .map(function (e) {
-          return (
-            '<article class="exp-card" data-exp-card="' + e.id + '" tabindex="0" role="button" ' +
-              'aria-label="Open preview of Experiment ' + e.id + ", " + esc(e.name) + '">' +
-              '<div class="exp-card__top">' +
-                '<span class="exp-card__num">' + e.id + "</span>" +
-                "<h3 class=\"exp-card__name\">" + highlightMatch(e.name, q) + "</h3>" +
-              "</div>" +
-              '<p class="exp-card__tag">' + esc(e.tagline || "") + "</p>" +
-              '<div class="exp-card__foot">' +
-                '<span class="chip">' + plural(e.sections.length, "part") + "</span>" +
-                '<span class="exp-card__parts">' + e.sections.map(function (s) {
-                  return "<i>" + esc(s.letter) + "</i>";
-                }).join("") + "</span>" +
-              "</div>" +
-            "</article>"
-          );
-        })
+        .map(function (experiment) { return experimentCardHtml(experiment, q); })
         .join("");
 
       $$("[data-exp-card]", grid).forEach(function (card) {
@@ -2845,10 +3041,12 @@
     const route = parseRoute();
     let active = "dashboard";
     if (route.name === "catalogue") active = "catalogue";
-    else if (route.name === "student") active = "dashboard";
+    else if (route.name === "student") active = "student";
     else if (route.name === "codelab") active = "codelab";
     else if (route.name === "modules") active = "modules";
     else if (route.name === "tools") active = "tools";
+    else if (route.name === "resources") active = "resources";
+    else if (route.name === "projects") active = "projects";
     else if (route.name === "experiment" || route.name === "overview" || route.name === "section") active = "catalogue";
     $$(".topnav__link").forEach(function (link) {
       const on = link.getAttribute("data-nav") === active;
