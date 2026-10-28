@@ -760,8 +760,8 @@
     return chips.length ? '<div class="meta-row">' + chips.join("") + "</div>" : "";
   }
 
-  /* The folder the experiment lives in on this computer. A browser cannot
-     open a local path, so it is shown as a reference only. */
+  /* A browser cannot open the original computer's folder. Keep that private
+     local path out of deployed pages; show only the catalogued filenames. */
   function sourceRefHtml(experiment) {
     const path = String(experiment.sourcePath || "").trim();
     if (!path) return "";
@@ -770,10 +770,9 @@
     }).join("");
     return (
       '<div class="source-ref">' +
-        '<span class="source-ref__label">Source folder</span>' +
-        '<code class="source-ref__path">' + esc(path) + "</code>" +
+        '<span class="source-ref__label">Catalogued source files</span>' +
         (files ? '<div class="source-ref__files">' + files + "</div>" : "") +
-        '<span class="source-ref__note">Local path on this computer - open it from the file explorer.</span>' +
+        '<span class="source-ref__note">The original local directory is not linked from this website.</span>' +
       "</div>"
     );
   }
@@ -1317,18 +1316,20 @@
     const code = String(section.code || "");
 
     const rows = [];
-    rows.push(
-      '<div class="dl-row">' +
-        '<div class="dl-row__text">' +
-          '<b>Python source</b>' +
-          "<span>" + esc(fileName) + " &middot; " + plural(code.split("\n").length, "line") +
-               " &middot; same code the Code Run page runs</span>" +
-        "</div>" +
-        '<button class="btn btn--ghost dl-btn" type="button" data-dl-src="' + esc(key) + '">' +
-          ICON.download + " Download .py" +
-        "</button>" +
-      "</div>"
-    );
+    if (code.trim()) {
+      rows.push(
+        '<div class="dl-row">' +
+          '<div class="dl-row__text">' +
+            '<b>Python source</b>' +
+            "<span>" + esc(fileName) + " &middot; " + plural(code.split("\n").length, "line") +
+                 " &middot; same code the Code Run page runs</span>" +
+          "</div>" +
+          '<button class="btn btn--ghost dl-btn" type="button" data-dl-src="' + esc(key) + '">' +
+            ICON.download + " Download .py" +
+          "</button>" +
+        "</div>"
+      );
+    }
 
     dataFiles.forEach(function (f) {
       const href = "assets/downloads/" + f;
@@ -1345,6 +1346,7 @@
       );
     });
 
+    if (!rows.length) return "";
     return (
       '<div class="downloads">' +
         '<h3 class="field-label"><span class="dot"></span>Download</h3>' +
@@ -2213,11 +2215,11 @@
     const grid = $("#recentGrid");
     if (!grid) return;
     $$("[data-exp-card]", grid).forEach(function (card) {
-      card.addEventListener("click", function () { openExperiment(card.getAttribute("data-exp-card")); });
+      card.addEventListener("click", function () { go("#/experiment/" + encodeURIComponent(card.getAttribute("data-exp-card"))); });
       card.addEventListener("keydown", function (event) {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          openExperiment(card.getAttribute("data-exp-card"));
+          go("#/experiment/" + encodeURIComponent(card.getAttribute("data-exp-card")));
         }
       });
     });
@@ -2691,10 +2693,11 @@
 
     /* Notes carried over from the lab notebook: what the part does, the key
        points, and the traps worth knowing before running it. */
-    const notes = section.notes
+    const sectionNotes = section.notes || section.content || "";
+    const notes = sectionNotes
       ? '<div class="refbox">' +
           '<h3 class="field-label"><span class="dot"></span>Notes</h3>' +
-          '<pre class="refbox__pre">' + esc(String(section.notes)) + "</pre>" +
+          '<pre class="refbox__pre">' + esc(String(sectionNotes)) + "</pre>" +
         "</div>"
       : "";
 
@@ -2721,14 +2724,13 @@
           /* LEFT : video, then the code block underneath it */
           "<div>" +
             sectionVideoHtml(section, experiment) +
-            '<div style="margin-top:22px">' +
+            (code ? '<div style="margin-top:22px">' +
               '<h2 class="field-label"><span class="dot"></span>Code</h2>' +
               codeViewerHtml(code, fileName) +
-              (code ? '<div class="code-runbar">' +
+              '<div class="code-runbar">' +
                 '<button class="btn btn--run" type="button" data-run-code>' + ICON.play + " Run this code</button>" +
-                   '<span class="code-runbar__hint">Opens Code Run with this part pre-loaded</span>' +
-              "</div>" : "") +
-            "</div>" +
+                '<span class="code-runbar__hint">Opens Code Run with this part pre-loaded</span>' +
+              "</div></div>" : "") +
           "</div>" +
 
           /* RIGHT : details for this part */
@@ -2962,47 +2964,251 @@
   }
 
   /* ---------------------------------------------------------------------
-     PAGE - RESOURCES  (official learning materials)
+     PAGE - RESOURCES  (official language, library and practical materials)
      --------------------------------------------------------------------- */
   function renderResources() {
-    const byCategory = {};
-    resources.forEach(function (r) {
-      (byCategory[r.category] = byCategory[r.category] || []).push(r);
-    });
-    const groups = Object.keys(byCategory).map(function (cat) {
-      const items = byCategory[cat].map(function (r) {
-        return (
-          '<li>' +
-          '<a class="link-row" href="' + esc(r.url) + '" target="_blank" rel="noopener noreferrer">' +
-            '<span class="link-row__text"><b>' + esc(r.title) + "</b><span class=\"link-row__url\">" + esc(r.url) + "</span></span>" +
-            ICON.external +
-          "</a>" +
-          '<p class="summary" style="margin:4px 0 0">' + esc(r.description) + "</p>" +
-          "</li>"
-        );
-      }).join("");
-      return (
-        '<article class="card card--pad">' +
-          '<p class="eyebrow">' + esc(cat) + "</p>" +
-          '<h2 class="sec-title" style="margin:0">' + esc(cat) + "</h2>" +
-          '<ul class="mini-list">' + items + "</ul>" +
-        "</article>"
-      );
-    }).join("");
+    const items = [];
+    function addTopics(category, group, practical, topics) {
+      topics.forEach(function (topic) {
+        items.push({ category: category, group: group, title: topic[0], description: topic[1],
+          url: topic[2], practical: practical || "", kind: "Official documentation" });
+      });
+    }
 
+    const python = "https://docs.python.org/3/";
+    addTopics("Programming Languages", "Python", "#/experiment/1", [
+      ["Python tutorial", "Language tutorial from the official Python documentation.", python + "tutorial/"],
+      ["Syntax and built-in data types", "Numbers, strings, sequences, mappings and other built-in types.", python + "library/stdtypes.html"],
+      ["Conditions and loops", "if statements, for loops, range and loop control.", python + "tutorial/controlflow.html"],
+      ["Functions", "Defining functions, arguments, return values and scopes.", python + "tutorial/controlflow.html#defining-functions"],
+      ["Lists, tuples, sets and dictionaries", "Core collection types and common operations.", python + "tutorial/datastructures.html"],
+      ["File handling", "Reading and writing text and binary files.", python + "tutorial/inputoutput.html#reading-and-writing-files"],
+      ["Exception handling", "Handling exceptions with try, except, else and finally.", python + "tutorial/errors.html"],
+      ["Classes and objects", "Classes, instances, inheritance and namespaces.", python + "tutorial/classes.html"]
+    ]);
+
+    const sqlite = "https://www.sqlite.org/";
+    addTopics("Programming Languages", "SQL · SQLite dialect", "#/codelab/sql", [
+      ["SQL basics and syntax", "SQLite SQL language reference; this compiler executes SQLite, not a MySQL server.", sqlite + "lang.html"],
+      ["CREATE TABLE", "Table definitions, column types and table constraints.", sqlite + "lang_createtable.html"],
+      ["INSERT", "Insert one or multiple rows into a table.", sqlite + "lang_insert.html"],
+      ["SELECT and WHERE", "Query expressions, filtering, joins and result columns.", sqlite + "lang_select.html"],
+      ["ORDER BY and LIMIT", "Sort result rows and limit the returned range.", sqlite + "lang_select.html#orderby"],
+      ["UPDATE", "Update values in existing rows.", sqlite + "lang_update.html"],
+      ["DELETE", "Delete rows from a table.", sqlite + "lang_delete.html"],
+      ["Aggregate functions", "COUNT, SUM, AVG, MIN, MAX and related functions.", sqlite + "lang_aggfunc.html"],
+      ["GROUP BY and HAVING", "Group rows and filter aggregate groups.", sqlite + "lang_select.html#resultset"],
+      ["JOINs", "Join behavior and join constraints in SQLite SELECT statements.", sqlite + "lang_select.html#join"],
+      ["Subqueries", "Nested SELECT statements and expression subqueries.", sqlite + "lang_expr.html#subq"],
+      ["Constraints", "PRIMARY KEY, FOREIGN KEY, UNIQUE, CHECK and NOT NULL.", sqlite + "lang_createtable.html#constraints"],
+      ["Transactions and savepoints", "BEGIN, COMMIT, ROLLBACK and SAVEPOINT commands.", sqlite + "lang_transaction.html"],
+      ["SQLite and MySQL syntax", "SQLite has no server-managed CREATE DATABASE or USE; this compiler maps those two commands to local databases.", sqlite + "quirks.html"]
+    ]);
+
+    const java = "https://docs.oracle.com/javase/tutorial/";
+    addTopics("Programming Languages", "Java", "#/codelab/java", [
+      ["Java tutorials", "Oracle's Java learning trail and language documentation.", java],
+      ["Java basics", "Getting started with the Java platform and first programs.", java + "getStarted/"],
+      ["Data types and operators", "Variables, primitive types, arrays and operators.", java + "java/nutsandbolts/"],
+      ["Conditions and loops", "Control flow, branching and iteration statements.", java + "java/nutsandbolts/flow.html"],
+      ["Arrays and strings", "Array syntax, traversal and string handling.", java + "java/nutsandbolts/arrays.html"],
+      ["Object-oriented programming", "Classes, objects, inheritance and interfaces.", java + "java/concepts/"],
+      ["Collections", "The Java Collections Framework and its interfaces.", java + "collections/"],
+      ["Exception handling", "Throwing, catching and handling exceptions.", java + "essential/exceptions/"],
+      ["File handling", "File and stream I/O concepts.", java + "essential/io/"]
+    ]);
+
+    addTopics("Programming Languages", "HTML", "#/codelab/html", [
+      ["HTML documentation", "Elements, attributes and semantic document structure.", "https://developer.mozilla.org/en-US/docs/Web/HTML"],
+      ["HTML forms", "Form controls, labels, validation and submission.", "https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms"]
+    ]);
+    addTopics("Programming Languages", "CSS", "#/codelab/css", [
+      ["CSS documentation", "Selectors, properties, values and the cascade.", "https://developer.mozilla.org/en-US/docs/Web/CSS"],
+      ["CSS layout", "Responsive layout techniques including Grid and Flexbox.", "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/CSS_layout"]
+    ]);
+    addTopics("Programming Languages", "JavaScript", "#/codelab/javascript", [
+      ["JavaScript guide", "Core language concepts and reference material.", "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"],
+      ["JavaScript fundamentals", "Variables, functions, control flow and data structures.", "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting"]
+    ]);
+
+    addTopics("Libraries & Tools", "pandas · Data analysis", "#/experiment/1", [
+      ["Series and DataFrames", "Create and inspect pandas' core data structures.", "https://pandas.pydata.org/docs/user_guide/dsintro.html"],
+      ["Read and write CSV files", "Load tabular text data and write it back to disk.", "https://pandas.pydata.org/docs/user_guide/io.html#csv-text-files"],
+      ["Selection and filtering", "Select rows and columns with loc, iloc and boolean masks.", "https://pandas.pydata.org/docs/user_guide/indexing.html"],
+      ["Missing data", "Detect, remove and fill missing values.", "https://pandas.pydata.org/docs/user_guide/missing_data.html"],
+      ["Grouping and aggregation", "Split-apply-combine workflows with groupby.", "https://pandas.pydata.org/docs/user_guide/groupby.html"],
+      ["Merging and joining", "Combine DataFrames with merge and join.", "https://pandas.pydata.org/docs/user_guide/merging.html"],
+      ["Exporting data", "Write DataFrames to CSV, JSON and Excel formats.", "https://pandas.pydata.org/docs/user_guide/io.html"]
+    ]);
+    addTopics("Libraries & Tools", "NumPy · Numerical computing", "#/experiment/3", [
+      ["Array creation", "Create arrays from data and with NumPy routines.", "https://numpy.org/doc/stable/user/basics.creation.html"],
+      ["Indexing arrays", "Index, slice and select NumPy array values.", "https://numpy.org/doc/stable/user/basics.indexing.html"],
+      ["Vectorized operations", "Universal functions and element-wise operations.", "https://numpy.org/doc/stable/user/basics.ufuncs.html"],
+      ["Reshaping arrays", "Change array shapes and combine dimensions.", "https://numpy.org/doc/stable/user/quickstart.html#changing-the-shape-of-an-array"],
+      ["Aggregations", "Compute sums, means, minima and other reductions.", "https://numpy.org/doc/stable/user/basics.ufuncs.html"]
+    ]);
+    addTopics("Libraries & Tools", "Matplotlib · Visualization", "#/experiment/5", [
+      ["Quick start", "A first figure, axes and plotting call.", "https://matplotlib.org/stable/users/explain/quick_start.html"],
+      ["Line charts", "Plot lines and customize visual properties.", "https://matplotlib.org/stable/plot_types/basic/plot.html"],
+      ["Bar charts", "Create grouped and stacked bar charts.", "https://matplotlib.org/stable/plot_types/basic/bar.html"],
+      ["Histograms", "Display the distribution of numerical values.", "https://matplotlib.org/stable/plot_types/stats/hist_plot.html"],
+      ["Scatter plots", "Show the relationship between paired observations.", "https://matplotlib.org/stable/plot_types/basic/scatter_plot.html"],
+      ["Labels, legends and saved figures", "Annotate charts and save them in supported formats.", "https://matplotlib.org/stable/users/explain/axes/legend_guide.html"]
+    ]);
+    addTopics("Libraries & Tools", "Seaborn · Statistical plots", "#/experiment/5", [
+      ["Seaborn tutorial", "Overview of statistical visualization with Seaborn.", "https://seaborn.pydata.org/tutorial.html"],
+      ["Distribution plots", "Visualize univariate and bivariate distributions.", "https://seaborn.pydata.org/tutorial/distributions.html"],
+      ["Categorical plots", "Compare distributions across categories.", "https://seaborn.pydata.org/tutorial/categorical.html"],
+      ["Relational plots", "Explore relationships with scatter and line plots.", "https://seaborn.pydata.org/tutorial/relational.html"]
+    ]);
+    addTopics("Libraries & Tools", "scikit-learn · Machine learning", "#/experiment/9", [
+      ["Getting started", "Estimator API, fitting and prediction basics.", "https://scikit-learn.org/stable/getting_started.html"],
+      ["Preprocessing", "Scale and transform numeric features.", "https://scikit-learn.org/stable/modules/preprocessing.html"],
+      ["Training and testing", "Split data for training and evaluation.", "https://scikit-learn.org/stable/modules/cross_validation.html"],
+      ["K-means clustering", "Partition observations into clusters.", "https://scikit-learn.org/stable/modules/clustering.html#k-means"],
+      ["Clustering evaluation", "Evaluate clusters with measures including silhouette.", "https://scikit-learn.org/stable/modules/clustering.html#clustering-performance-evaluation"],
+      ["Model evaluation", "Metrics and validation strategies.", "https://scikit-learn.org/stable/modules/model_evaluation.html"]
+    ]);
+    addTopics("Libraries & Tools", "SQLite · Relational database", "#/codelab/sql", [
+      ["Create tables", "Define SQLite tables and constraints.", sqlite + "lang_createtable.html"],
+      ["CRUD operations", "Insert, query, update and delete data.", sqlite + "lang.html"],
+      ["Joins", "Combine rows from related tables.", sqlite + "lang_select.html#join"],
+      ["Constraints", "Enforce keys, uniqueness and checks.", sqlite + "lang_createtable.html#constraints"],
+      ["Transactions", "Control atomic operations with transactions and savepoints.", sqlite + "lang_transaction.html"]
+    ]);
+    addTopics("Libraries & Tools", "Requests · HTTP", "#/experiment/2", [
+      ["Quickstart", "HTTP requests, responses, status codes and JSON.", "https://requests.readthedocs.io/en/latest/user/quickstart/"],
+      ["Headers and authentication", "Configure headers and authentication for HTTP calls.", "https://requests.readthedocs.io/en/latest/user/quickstart/#custom-headers"],
+      ["Timeouts and errors", "Handle request failures and set timeouts.", "https://requests.readthedocs.io/en/latest/user/quickstart/#errors-and-exceptions"]
+    ]);
+    addTopics("Libraries & Tools", "Beautiful Soup · HTML parsing", "#/experiment/8", [
+      ["Beautiful Soup documentation", "Parse HTML and XML documents with Beautiful Soup.", "https://www.crummy.com/software/BeautifulSoup/bs4/doc/"],
+      ["Find elements", "Search a parsed tree with find and find_all.", "https://www.crummy.com/software/BeautifulSoup/bs4/doc/#find-all"],
+      ["Navigate the tree", "Move through parents, children and sibling elements.", "https://www.crummy.com/software/BeautifulSoup/bs4/doc/#navigating-the-tree"],
+      ["Extract text", "Read element text and attributes from parsed markup.", "https://www.crummy.com/software/BeautifulSoup/bs4/doc/#get-text"]
+    ]);
+    addTopics("Libraries & Tools", "Jupyter Notebook", "#/experiment/7", [
+      ["Jupyter documentation", "Official Jupyter project documentation and notebook resources.", "https://docs.jupyter.org/"]
+    ]);
+
+    const materials = [];
+    modules.forEach(function (module) {
+      if (module.pdf) materials.push({ category: "Study Materials", group: "Module PDFs", title: module.title,
+        description: "Module " + module.number + " study notes in the website's included PDF.",
+        url: module.pdf, local: true, kind: "PDF · Module " + module.number });
+    });
+    [
+      ["assets/downloads/iris.csv", "Iris dataset", "CSV dataset referenced by the visualization and grouping practicals.", "Dataset · CSV", "#/experiment/5"],
+      ["assets/downloads/StudentOutputs.csv", "Student outputs", "CSV output included with the file-format experiment.", "Dataset · CSV", "#/experiment/1"],
+      ["assets/downloads/StudentsOutputs.csv", "Students outputs", "CSV file included with the file-format experiment.", "Dataset · CSV", "#/experiment/1"],
+      ["assets/downloads/Student.json", "Student records", "JSON export created by the file-format experiment.", "Data file · JSON", "#/experiment/1"],
+      ["assets/downloads/Student.xlsx", "Student workbook", "Excel workbook included with the file-format experiment.", "Data file · Excel", "#/experiment/1"],
+      ["assets/downloads/Engineer.db", "Engineer SQLite database", "Database file included with Experiment 2.", "Database · SQLite", "#/experiment/2"],
+      ["assets/downloads/ds_experiment2b.db", "Experiment 2B SQLite database", "Database file included with Experiment 2.", "Database · SQLite", "#/experiment/2"],
+      ["assets/downloads/Exp7.ipynb", "Experiment 7 notebook", "Notebook file for grouping and aggregation practicals.", "Notebook · Jupyter", "#/experiment/7"]
+    ].forEach(function (item) {
+      materials.push({ category: "Study Materials", group: "Datasets & practical files", url: item[0],
+        title: item[1], description: item[2], kind: item[3], practical: item[4], local: true });
+    });
+    experiments.forEach(function (experiment) {
+      materials.push({ category: "Study Materials", group: "Experiment catalogue", title: "Experiment " + experiment.id + " · " + experiment.name,
+        description: experiment.tagline || experiment.summary || "Open the practical, source code and available materials.",
+        kind: "Practical", practical: "#/experiment/" + experiment.id });
+      (experiment.sections || []).forEach(function (section) {
+        if (!section.video || !/^assets\/videos\//.test(section.video)) return;
+        materials.push({ category: "Study Materials", group: "Practical videos", title: "Experiment " + experiment.id + " · Part " + (section.letter || ""),
+          description: section.videoDescription || section.title || experiment.name,
+          kind: "MP4 practical video", url: section.video, local: true });
+      });
+    });
+    items.push.apply(items, materials);
+
+    const categories = [];
+    items.forEach(function (item) { if (categories.indexOf(item.category) < 0) categories.push(item.category); });
+    const cardHtml = function (r) {
+      const search = (r.title + " " + r.description + " " + r.group + " " + r.kind).toLowerCase();
+      const icon = r.category === "Programming Languages" ? ICON.code : r.category === "Libraries & Tools" ? ICON.wrench : (r.kind || "").indexOf("video") !== -1 ? ICON.play : ICON.doc;
+      const localUrl = r.url ? esc(r.url) : "";
+      const documentationAction = r.url && !r.local
+        ? '<a class="btn btn--sm btn--primary" href="' + localUrl + '" target="_blank" rel="noopener noreferrer">' + ICON.external + " Official Docs</a>"
+        : r.url && r.local && r.kind.indexOf("video") !== -1
+          ? '<a class="btn btn--sm btn--primary" href="' + localUrl + '" target="_blank" rel="noopener">' + ICON.play + " Watch Demo</a>"
+          : r.url && r.local
+            ? '<a class="btn btn--sm btn--primary" href="' + localUrl + '" target="_blank" rel="noopener" download>' + ICON.download + " Download</a>"
+            : "";
+      const practicalAction = r.practical
+        ? '<a class="btn btn--sm btn--ghost" href="' + esc(r.practical) + '" data-link>' +
+            (r.practical === "#/codelab/sql" ? ICON.code + " Open SQL Compiler" : ICON.arrowRight + " Open Practical") + "</a>"
+        : "";
+      return '<article class="resource-card" data-resource-card data-category="' + esc(r.category) + '" data-search="' + esc(search) + '">' +
+        '<div class="resource-card__icon" aria-hidden="true">' + icon + '</div>' +
+        '<div class="resource-card__body"><div class="resource-card__meta"><span>' + esc(r.group) + '</span><span>' + esc(r.kind) + '</span></div>' +
+        '<h3>' + esc(r.title) + '</h3><p>' + esc(r.description) + '</p></div>' +
+        '<div class="resource-card__actions">' + documentationAction + practicalAction + '</div></article>';
+    };
+    const sections = categories.map(function (category) {
+      const categoryItems = items.filter(function (item) { return item.category === category; });
+      const groups = [];
+      categoryItems.forEach(function (item) { if (groups.indexOf(item.group) < 0) groups.push(item.group); });
+      return '<section class="resource-section" data-resource-section="' + esc(category) + '">' +
+        '<header class="resource-section__head"><h2>' + esc(category) + '</h2><span>' + categoryItems.length + (categoryItems.length === 1 ? " resource" : " resources") + '</span></header>' +
+        groups.map(function (group) {
+          const groupItems = categoryItems.filter(function (item) { return item.group === group; });
+          return '<div class="resource-group"><h3>' + esc(group) + '<span>' + groupItems.length + '</span></h3><div class="resource-grid">' + groupItems.map(cardHtml).join("") + '</div></div>';
+        }).join("") + '</section>';
+    }).join("");
     return (
       '<div class="page stack">' +
         crumb([{ label: "Home", href: "#/" }, { label: "Resources" }]) +
 
-        '<section class="card card--pad">' +
-          '<p class="eyebrow">' + esc(laboratory.name) + "</p>" +
-          '<h1 class="preview-title"><span class="hl">Resources</span></h1>' +
-          '<p class="sec-sub">Official documentation and reliable educational sources for the tools and concepts used in the laboratory&rsquo;s experiments and Code Run page.</p>' +
+        '<section class="resource-hero card card--pad">' +
+          '<p class="eyebrow">' + esc(laboratory.name) + ' · LEARNING LIBRARY</p>' +
+          '<h1 class="preview-title"><span class="hl">Learning Resources</span></h1>' +
+          '<p class="sec-sub">Explore official documentation, programming languages, libraries, practical examples, datasets, and learning materials used in Digital Laboratory experiments.</p>' +
+          '<label class="resource-search"><span class="sr-only">Search resources</span><span aria-hidden="true">' + ICON.search + '</span><input id="resourceSearch" type="search" placeholder="Search languages, libraries, topics and practicals…" autocomplete="off"><kbd>/</kbd></label>' +
+          '<div class="resource-filters" role="group" aria-label="Filter resource categories"><button class="resource-filter is-active" type="button" data-resource-filter="all">All <span>' + items.length + '</span></button>' + categories.map(function (cat) {
+            return '<button class="resource-filter" type="button" data-resource-filter="' + esc(cat) + '">' + esc(cat) + '<span>' + items.filter(function (r) { return r.category === cat; }).length + '</span></button>';
+          }).join("") + '</div>' +
         "</section>" +
-
-        '<div class="exp-grid">' + groups + "</div>" +
+        '<div id="resourceLibrary">' + sections + '</div>' +
+        '<p class="resource-empty" id="resourceEmpty" hidden>No resources match this search. Try another term or clear the category filter.</p>' +
       "</div>"
     );
+  }
+
+  function wireResources() {
+    const search = $("#resourceSearch");
+    const library = $("#resourceLibrary");
+    const empty = $("#resourceEmpty");
+    if (!search || !library) return;
+    let category = "all";
+    function filter() {
+      const term = search.value.trim().toLowerCase();
+      let visible = 0;
+      $$('[data-resource-card]', library).forEach(function (card) {
+        const match = (category === "all" || card.getAttribute("data-category") === category) &&
+          card.getAttribute("data-search").indexOf(term) !== -1;
+        card.hidden = !match;
+        if (match) visible++;
+      });
+      $$('[data-resource-section]', library).forEach(function (section) {
+        section.hidden = !Array.prototype.some.call($$('[data-resource-card]', section), function (card) { return !card.hidden; });
+      });
+      empty.hidden = visible > 0;
+    }
+    search.addEventListener("input", filter);
+    $$('[data-resource-filter]').forEach(function (button) {
+      button.addEventListener("click", function () {
+        category = button.getAttribute("data-resource-filter");
+        $$('[data-resource-filter]').forEach(function (item) {
+          const active = item === button;
+          item.classList.toggle("is-active", active);
+          item.setAttribute("aria-pressed", String(active));
+        });
+        filter();
+      });
+      button.setAttribute("aria-pressed", String(button.getAttribute("data-resource-filter") === "all"));
+    });
   }
 
   /* ---------------------------------------------------------------------
@@ -3090,7 +3296,8 @@
           view.innerHTML = '<div id="lab2Host"></div>';
           window.DSCodeLab.mount(document.getElementById("lab2Host"), {
             code: carry ? carry.code : "",
-            name: carry ? carry.label : ""
+            name: carry ? carry.label : "",
+            language: route.id || ""
           });
           pendingLabCode = null;
         } else {
@@ -3113,6 +3320,7 @@
 
       case "resources":
         view.innerHTML = renderResources();
+        wireResources();
         pageTitle = "Resources - " + laboratory.name;
         break;
 

@@ -13,8 +13,8 @@
                 script can be killed instantly by terminating it, and so the UI
                 thread never freezes.
     javascript  A plain Web Worker. `window` and `document` are not available.
-    sql         sqlite3, which already ships inside Pyodide, so SQL is instant
-                once the Python runtime is warm.
+    sql         SQLite compiled to WebAssembly in a dedicated Worker. SQL has
+                its own lightweight runtime and does not wait for Pyodide.
     html, css   A sandboxed iframe (sandbox="allow-scripts", no same-origin).
     everything  else (Java, C, C++, PHP, Kotlin, Go, Rust, ...) is compiled
     else        and run by a Judge0 endpoint, which executes each submission
@@ -44,12 +44,51 @@
 
   var PYODIDE_VERSION = "0.27.2";
   var PYODIDE_CDN = "https://cdn.jsdelivr.net/pyodide/v" + PYODIDE_VERSION + "/full/";
+  var SQLJS_VERSION = "1.13.0";
+  var SQLJS_CDN = "https://cdn.jsdelivr.net/npm/sql.js@" + SQLJS_VERSION + "/dist/";
   var JUDGE0_URL = "https://ce.judge0.com";
   var WORKER_TIMEOUT_MS = 30000;
   var PYODIDE_LOAD_TIMEOUT_MS = 180000;
   var MAX_VERSIONS = 20;
   var STORE_KEY = "dslab.workspace.v2";
   var CONFIG_KEY = "dslab.config.v2";
+  var SQL_STORE_KEY = "dslab.sql.database.v1";
+
+  var SQL_SEED = [
+    "PRAGMA foreign_keys = ON;",
+    "CREATE TABLE Students (id INTEGER PRIMARY KEY, name TEXT NOT NULL, department TEXT, marks INTEGER CHECK (marks BETWEEN 0 AND 100));",
+    "CREATE TABLE Departments (department_id INTEGER PRIMARY KEY, department_name TEXT UNIQUE NOT NULL);",
+    "CREATE TABLE Courses (course_id INTEGER PRIMARY KEY, course_name TEXT NOT NULL, department_id INTEGER REFERENCES Departments(department_id));",
+    "CREATE TABLE Enrollments (student_id INTEGER REFERENCES Students(id), course_id INTEGER REFERENCES Courses(course_id), grade TEXT DEFAULT 'Pending', PRIMARY KEY (student_id, course_id));",
+    "INSERT INTO Departments VALUES (1, 'CSE-DS'), (2, 'CSE'), (3, 'IT');",
+    "INSERT INTO Students VALUES (1, 'Shiva', 'CSE-DS', 95), (2, 'Ravi', 'CSE', 82), (3, 'Priya', 'IT', 91), (4, 'Maya', 'CSE-DS', 87);",
+    "INSERT INTO Courses VALUES (101, 'Data Science', 1), (102, 'Database Systems', 2), (103, 'Statistics', 1), (104, 'Web Technology', 3);",
+    "INSERT INTO Enrollments VALUES (1, 101, 'A'), (1, 103, 'A'), (2, 102, 'B'), (3, 104, 'A'), (4, 101, 'B');",
+    "CREATE TABLE Employees (employee_id INTEGER PRIMARY KEY, name TEXT NOT NULL, department TEXT, salary REAL CHECK (salary >= 0));",
+    "INSERT INTO Employees VALUES (1, 'Asha', 'Analytics', 72000), (2, 'Noah', 'Engineering', 84000), (3, 'Ivy', 'Analytics', 76000), (4, 'Leo', 'Design', 68000);"
+  ].join("\n") + "\n";
+  var SQL_EMPLOYEE_SEED = [
+    "CREATE TABLE Employees (employee_id INTEGER PRIMARY KEY, name TEXT NOT NULL, department TEXT, salary REAL CHECK (salary >= 0));",
+    "INSERT INTO Employees VALUES (1, 'Asha', 'Analytics', 72000), (2, 'Noah', 'Engineering', 84000), (3, 'Ivy', 'Analytics', 76000), (4, 'Leo', 'Design', 68000);"
+  ].join("\n") + "\n";
+
+  var SQL_EXAMPLES = [
+    { title: "MySQL-style college database", level: "Beginner", description: "CREATE DATABASE and USE are handled by the local database selector; table and row operations run in real SQLite. INT and VARCHAR are accepted as SQLite type declarations.", sql: "CREATE DATABASE college;\nUSE college;\n\nCREATE TABLE Students (\n    id INT,\n    name VARCHAR(50),\n    marks INT\n);\n\nINSERT INTO Students VALUES (1, 'Shiva', 95);\n\nSELECT * FROM Students;" },
+    { title: "Create a table with constraints", level: "Beginner", description: "Create a local practice table with a primary key, NOT NULL, DEFAULT and CHECK constraints.", sql: "CREATE TABLE IF NOT EXISTS PracticeTasks (\n  task_id INTEGER PRIMARY KEY,\n  title TEXT NOT NULL,\n  priority INTEGER DEFAULT 1 CHECK (priority BETWEEN 1 AND 5)\n);\n\nPRAGMA table_info(PracticeTasks);" },
+    { title: "SELECT and filtering", level: "Beginner", description: "Filter rows, then sort the highest marks first.", sql: "SELECT name, department, marks\nFROM Students\nWHERE marks > 85\nORDER BY marks DESC;" },
+    { title: "Sorting and limiting", level: "Beginner", description: "Sort by marks and return only the top three records.", sql: "SELECT name, marks\nFROM Students\nORDER BY marks DESC\nLIMIT 3 OFFSET 0;" },
+    { title: "Insert a student", level: "Beginner", description: "Add a row with SQLite's multi-column INSERT syntax.", sql: "INSERT INTO Students (name, department, marks)\nVALUES ('Jordan', 'CSE-DS', 89);\n\nSELECT * FROM Students WHERE name = 'Jordan';" },
+    { title: "Update and delete rows", level: "Intermediate", description: "Modify a matching row, verify the change, then delete it by key.", sql: "UPDATE Students SET marks = 96 WHERE id = 2;\nSELECT id, name, marks FROM Students WHERE id = 2;\nDELETE FROM Students WHERE id = 2;\nSELECT COUNT(*) AS remaining_students FROM Students;" },
+    { title: "Aggregate functions", level: "Beginner", description: "Calculate count, average, minimum and maximum marks.", sql: "SELECT COUNT(*) AS student_count,\n       ROUND(AVG(marks), 1) AS average_marks,\n       MIN(marks) AS lowest, MAX(marks) AS highest\nFROM Students;" },
+    { title: "GROUP BY and HAVING", level: "Intermediate", description: "Summarize students by department and keep groups with an average above 85.", sql: "SELECT department, COUNT(*) AS students, ROUND(AVG(marks), 1) AS average_marks\nFROM Students\nGROUP BY department\nHAVING AVG(marks) > 85\nORDER BY average_marks DESC;" },
+    { title: "INNER JOIN", level: "Intermediate", description: "Join student, enrollment and course records using their keys.", sql: "SELECT s.name, c.course_name, e.grade\nFROM Students AS s\nINNER JOIN Enrollments AS e ON e.student_id = s.id\nINNER JOIN Courses AS c ON c.course_id = e.course_id\nORDER BY s.name, c.course_name;" },
+    { title: "LEFT JOIN", level: "Intermediate", description: "Keep every student, including students without an enrollment.", sql: "SELECT s.name, e.course_id, e.grade\nFROM Students AS s\nLEFT JOIN Enrollments AS e ON e.student_id = s.id\nORDER BY s.id;" },
+    { title: "Subquery and EXISTS", level: "Advanced", description: "Find students whose marks are above the overall average and who have enrollments.", sql: "SELECT name, marks\nFROM Students\nWHERE marks > (SELECT AVG(marks) FROM Students)\n  AND EXISTS (SELECT 1 FROM Enrollments e WHERE e.student_id = Students.id);" },
+    { title: "Constraints", level: "Intermediate", description: "Inspect schema constraints. Try inserting an out-of-range mark to see the real CHECK error.", sql: "PRAGMA table_info(Students);\n\n-- This violates the CHECK constraint:\nINSERT INTO Students (name, department, marks)\nVALUES ('Invalid', 'CSE', 120);" },
+    { title: "Transactions and savepoints", level: "Advanced", description: "Demonstrate BEGIN, SAVEPOINT, ROLLBACK TO and COMMIT with a temporary change.", sql: "BEGIN;\nUPDATE Students SET marks = marks + 1 WHERE id = 1;\nSAVEPOINT before_second_change;\nUPDATE Students SET marks = marks + 5 WHERE id = 2;\nROLLBACK TO before_second_change;\nRELEASE before_second_change;\nCOMMIT;\nSELECT id, name, marks FROM Students ORDER BY id;" },
+    { title: "Create a view and index", level: "Intermediate", description: "Create a reusable view and an index, then query the view.", sql: "CREATE INDEX IF NOT EXISTS idx_students_department ON Students(department);\nCREATE VIEW IF NOT EXISTS HighScorers AS\nSELECT name, department, marks FROM Students WHERE marks >= 90;\nSELECT * FROM HighScorers ORDER BY marks DESC;" },
+    { title: "CTE and UNION", level: "Advanced", description: "Use a CTE to aggregate salaries, then combine names from two result sets.", sql: "WITH department_pay AS (\n  SELECT department, AVG(salary) AS average_salary\n  FROM Employees GROUP BY department\n)\nSELECT department, ROUND(average_salary, 0) AS average_salary\nFROM department_pay ORDER BY average_salary DESC;\n\nSELECT name FROM Students WHERE marks >= 90\nUNION\nSELECT name FROM Employees WHERE salary >= 80000;" }
+  ];
 
   var ICON = {
     play: '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M8 5.5v13l11-6.5-11-6.5Z"/></svg>',
@@ -230,8 +269,8 @@
   };
 
   L.sql = {
-    id: "sql", label: "SQL", ext: "sql", engine: "pyodide",
-    version: "SQLite 3", indent: 2, notebook: false, caseInsensitive: true,
+    id: "sql", label: "SQL", ext: "sql", engine: "sqlite",
+    version: "SQLite WebAssembly", indent: 2, notebook: false, caseInsensitive: true,
     lineComment: "--", blockComment: ["/*", "*/"],
     keywords: ["SELECT","FROM","WHERE","GROUP","BY","ORDER","HAVING","LIMIT","OFFSET","INSERT","INTO","VALUES","UPDATE","SET","DELETE","CREATE","TABLE","DROP","ALTER","ADD","PRIMARY","KEY","FOREIGN","REFERENCES","UNIQUE","NOT","NULL","DEFAULT","JOIN","LEFT","RIGHT","INNER","OUTER","CROSS","ON","AS","AND","OR","IN","BETWEEN","LIKE","IS","DISTINCT","UNION","ALL","CASE","WHEN","THEN","ELSE","END","WITH","INDEX","VIEW"],
     builtins: ["COUNT","SUM","AVG","MIN","MAX","ROUND","ABS","COALESCE","UPPER","LOWER","LENGTH","GROUP_CONCAT","strftime","sqlite_master"]
@@ -356,7 +395,7 @@
     c: "#include <stdio.h>\n\nint main(void) {\n    int a, b;\n    scanf(\"%d %d\", &a, &b);\n    printf(\"%d\\n\", a + b);\n    return 0;\n}\n",
     cpp: "#include <iostream>\nusing namespace std;\n\nint main() {\n    int a, b;\n    cin >> a >> b;\n    cout << a + b << endl;\n    return 0;\n}\n",
     javascript: "// JavaScript runs in a Web Worker, so window and document are not available.\nconst nums = [12, 7, 25, 3, 18];\n\nconsole.log(\"sorted:\", [...nums].sort((a, b) => a - b));\nconsole.log(\"sum:\", nums.reduce((a, b) => a + b, 0));\nconsole.log(\"max:\", Math.max(...nums));\n",
-    sql: "-- SQLite, executed in order.\nCREATE TABLE students (\n  id    INTEGER PRIMARY KEY,\n  name  TEXT,\n  dept  TEXT,\n  marks INTEGER\n);\n\nINSERT INTO students (name, dept, marks) VALUES\n  ('Shiva', 'DS', 92),\n  ('Kanishka', 'DS', 88),\n  ('Surya', 'CSE', 76),\n  ('Kushwanth', 'CSE', 95);\n\nSELECT dept, COUNT(*) AS students, AVG(marks) AS average\nFROM students\nGROUP BY dept;\n",
+    sql: "-- SQLite learning database: Students, Courses and Enrollments\nSELECT s.name, c.course_name, e.grade\nFROM Students AS s\nJOIN Enrollments AS e ON e.student_id = s.id\nJOIN Courses AS c ON c.course_id = e.course_id\nORDER BY s.name, c.course_name;\n\nSELECT department, COUNT(*) AS students, ROUND(AVG(marks), 1) AS average_marks\nFROM Students\nGROUP BY department\nORDER BY average_marks DESC;\n",
     html: "<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n  <title>My page</title>\n  <style>\n    body { font-family: system-ui; padding: 24px; }\n    h1 { color: #0d9488; }\n  </style>\n</head>\n<body>\n  <h1>Hello from Code Run</h1>\n  <p>Edit the HTML on the left and it updates on the right.</p>\n  <button onclick=\"alert('It works!')\">Click me</button>\n</body>\n</html>\n",
     css: "body {\n  margin: 0;\n  padding: 32px;\n  font-family: system-ui, sans-serif;\n  background: #0f172a;\n  color: #e2e8f0;\n}\n\n.card {\n  max-width: 420px;\n  margin: 0 auto;\n  padding: 28px;\n  border-radius: 16px;\n  background: #1e293b;\n}\n\nh1 {\n  margin-top: 0;\n  color: #2dd4bf;\n  font-size: 24px;\n}\n\np {\n  line-height: 1.7;\n  color: #94a3b8;\n}\n",
     php: "<?php\n$students = [[\"Shiva\", 92], [\"Kanishka\", 88], [\"Surya\", 76]];\n\n$sum = 0;\nforeach ($students as $s) {\n    echo $s[0] . \": \" . $s[1] . \"\\n\";\n    $sum += $s[1];\n}\necho \"Average: \" . ($sum / count($students)) . \"\\n\";\n",
@@ -618,38 +657,123 @@ function buildProgram() {
   ].join("\\n");
 }
 
-/* Runs the statements in _sql against a fresh in-memory SQLite database and
-   returns each SELECT result as a table. */
-function buildSqlProgram() {
-  return [
-    'import json',
-    '_sqlOut = json.dumps({"error": "The SQL engine could not start.", "tables": []})',
-    'try:',
-    '    import sqlite3, traceback',
-    '    conn = sqlite3.connect(":memory:")',
-    '    cur = conn.cursor()',
-    '    _tables = []',
-    '    _err = None',
-    '    try:',
-    '        for _s in _sql.split(";"):',
-    '            _s = _s.strip()',
-    '            if not _s:',
-    '                continue',
-    '            _parts = _s.split(None, 1)',
-    '            _head = _parts[0].upper() if _parts else ""',
-    '            _c = cur.execute(_s)',
-    '            if _head in ("SELECT", "PRAGMA", "WITH", "VALUES", "EXPLAIN") or _c.description:',
-    '                _cols = [d[0] for d in _c.description]',
-    '                _tables.append({"columns": _cols, "rows": [list(r) for r in _c.fetchall()]})',
-    '        conn.commit()',
-    '    except BaseException:',
-    '        _err = traceback.format_exc()',
-    '    _sqlOut = json.dumps({"error": _err or "", "tables": _tables}, default=str)',
-    'except BaseException:',
-    '    import traceback as _tb2',
-    '    _sqlOut = json.dumps({"error": _tb2.format_exc(), "tables": []}, default=str)'
-  ].join("\\n");
-}
+  /* SQLite is the actual query engine. A small, deliberately constrained
+     database selector handles only MySQL's CREATE DATABASE and USE commands;
+     all table/data SQL still goes to sqlite3.Cursor.execute(). */
+  function buildSqlProgram() {
+    return [
+      'import json, sqlite3',
+      '_sqlOut = {"error":"", "tables":[], "statements":[], "dump":"", "schema":[], "databases":{}}',
+      'try:',
+      '    if globals().get("_lab_sql_databases") is None:',
+      '        _lab_sql_databases = {}',
+      '        _lab_sql_manual_txs = {}',
+      '        _lab_sql_ui_key = None',
+      '        _lab_sql_selected = None',
+      '    try: _lab_sql_saved = json.loads(_sqlDump or "{}")',
+      '    except Exception: _lab_sql_saved = {}',
+      '    if not isinstance(_lab_sql_saved, dict): _lab_sql_saved = {}',
+      '    def _lab_open_sql_db(name, seed=""):',
+      '        if name not in _lab_sql_databases:',
+      '            db = sqlite3.connect(":memory:")',
+      '            db.execute("PRAGMA foreign_keys = ON")',
+      '            saved_sql = _lab_sql_saved.get(name, "")',
+      '            if saved_sql: db.executescript(saved_sql)',
+      '            elif seed: db.executescript(seed)',
+      '            db.execute("PRAGMA foreign_keys = ON")',
+      '            _lab_sql_databases[name] = db',
+      '            _lab_sql_manual_txs[name] = False',
+      '        return _lab_sql_databases[name]',
+      '    if _lab_sql_ui_key != _sqlDbKey:',
+      '        _lab_sql_selected = _sqlDbKey',
+      '        _lab_sql_ui_key = _sqlDbKey',
+      '    if _sqlAction == "reset":',
+      '        old_db = _lab_sql_databases.pop(_sqlDbKey, None)',
+      '        if old_db is not None: old_db.close()',
+      '        _lab_sql_manual_txs[_sqlDbKey] = False',
+      '        _lab_sql_selected = _sqlDbKey',
+      '        _lab_sql_ui_key = _sqlDbKey',
+      '        _lab_sql_databases[_sqlDbKey] = sqlite3.connect(":memory:")',
+      '        _lab_sql_databases[_sqlDbKey].execute("PRAGMA foreign_keys = ON")',
+      '        _lab_sql_databases[_sqlDbKey].executescript(_sqlSeed)',
+      '    conn = _lab_open_sql_db(_lab_sql_selected, _sqlSeed if _lab_sql_selected == _sqlDbKey else "")',
+      '    if _sqlAction == "reset":',
+      '        _sqlOut["message"] = "Sample database restored."',
+      '    else:',
+      '        pending = ""',
+      '        statements = []',
+      '        for char in _sql:',
+      '            pending += char',
+      '            if char == ";" and sqlite3.complete_statement(pending):',
+      '                if pending.strip(): statements.append(pending.strip())',
+      '                pending = ""',
+      '        if pending.strip() and pending.strip(" \\t\\r\\n;"):',
+      '            statements.append(pending.strip())',
+      '        if not statements and _sql.strip(): statements = [_sql.strip()]',
+      '        for statement in statements:',
+      '            try:',
+      '                tokens = statement.strip().rstrip(";").split()',
+      '                words = [token.upper() for token in tokens]',
+      '                if len(words) >= 2 and words[0] == "CREATE" and words[1] == "DATABASE":',
+      '                    offset = 2',
+      '                    if words[2:5] == ["IF", "NOT", "EXISTS"]: offset = 5',
+      '                    if len(tokens) != offset + 1: raise sqlite3.OperationalError("Supported compatibility syntax: CREATE DATABASE [IF NOT EXISTS] simple_name;")',
+      '                    db_name = tokens[offset]',
+      '                    if not db_name or not (db_name[0].isalpha() or db_name[0] == "_") or not all(ch.isalnum() or ch == "_" for ch in db_name): raise sqlite3.OperationalError("Database names must be unquoted identifiers containing letters, digits or underscores.")',
+      '                    if db_name in _lab_sql_databases or db_name in _lab_sql_saved:',
+      '                        if db_name not in _lab_sql_databases: _lab_open_sql_db(db_name)',
+      '                        if offset == 5: _sqlOut["message"] = "Database already exists: " + db_name',
+      '                        else: raise sqlite3.OperationalError("Database already exists: " + db_name)',
+      '                    else:',
+      '                        db = sqlite3.connect(":memory:")',
+      '                        db.execute("PRAGMA foreign_keys = ON")',
+      '                        _lab_sql_databases[db_name] = db',
+      '                        _lab_sql_manual_txs[db_name] = False',
+                        '                    _sqlOut["statements"].append({"sql": statement[:120], "affected": -1, "message": "Database ready: " + db_name})',
+      '                    continue',
+      '                if words and words[0] == "USE":',
+      '                    if len(tokens) != 2: raise sqlite3.OperationalError("Supported compatibility syntax: USE simple_name;")',
+      '                    db_name = tokens[1]',
+      '                    if not db_name or not (db_name[0].isalpha() or db_name[0] == "_") or not all(ch.isalnum() or ch == "_" for ch in db_name): raise sqlite3.OperationalError("Database names must be unquoted identifiers containing letters, digits or underscores.")',
+      '                    if db_name not in _lab_sql_databases and db_name not in _lab_sql_saved: raise sqlite3.OperationalError("Unknown database: " + db_name + ". Create it first with CREATE DATABASE " + db_name + ";")',
+      '                    conn = _lab_open_sql_db(db_name)',
+      '                    _lab_sql_selected = db_name',
+      '                    _sqlOut["statements"].append({"sql": statement[:120], "affected": -1, "message": "Using database: " + db_name})',
+      '                    continue',
+      '                conn = _lab_open_sql_db(_lab_sql_selected, _sqlSeed if _lab_sql_selected == _sqlDbKey else "")',
+      '                _control = words[0] if words else ""',
+      '                cursor = conn.cursor().execute(statement)',
+      '                if _control in ("BEGIN", "SAVEPOINT"): _lab_sql_manual_txs[_lab_sql_selected] = True',
+      '                elif _control in ("COMMIT", "END") or (_control == "ROLLBACK" and " TO " not in (" " + statement.upper() + " ")): _lab_sql_manual_txs[_lab_sql_selected] = False',
+      '                elif _control == "RELEASE": _lab_sql_manual_txs[_lab_sql_selected] = conn.in_transaction',
+      '                item = {"sql": statement[:120], "affected": cursor.rowcount}',
+      '                if cursor.description:',
+      '                    item["columns"] = [d[0] for d in cursor.description]',
+      '                    item["rows"] = [list(row) for row in cursor.fetchmany(501)]',
+      '                    item["truncated"] = len(item["rows"]) > 500',
+      '                    item["rows"] = item["rows"][:500]',
+      '                _sqlOut["statements"].append(item)',
+      '                if cursor.description:',
+      '                    _sqlOut["tables"].append({"columns": item["columns"], "rows": item["rows"], "truncated": item["truncated"]})',
+      '            except Exception as err:',
+      '                _sqlOut["error"] = str(err)',
+      '                _sqlOut["failedStatement"] = statement[:120]',
+      '                break',
+      '        conn = _lab_open_sql_db(_lab_sql_selected, _sqlSeed if _lab_sql_selected == _sqlDbKey else "")',
+      '        if not _sqlOut["error"] and not _lab_sql_manual_txs.get(_lab_sql_selected, False): conn.commit()',
+      '        elif _sqlOut["error"] and not _lab_sql_manual_txs.get(_lab_sql_selected, False): conn.rollback()',
+      '    _sqlOut["selectedDatabase"] = _lab_sql_selected',
+      '    _sqlOut["transactionOpen"] = any(_lab_sql_manual_txs.values())',
+      '    _sqlOut["dump"] = "\\n".join(conn.iterdump())',
+      '    _sqlOut["schema"] = [list(r) for r in conn.execute("SELECT name, type FROM sqlite_master WHERE type IN (\'table\',\'view\') AND name NOT LIKE \'sqlite_%\' ORDER BY type, name")]',
+      '    _sqlOut["databases"] = {name: "\\n".join(db.iterdump()) for name, db in _lab_sql_databases.items()}',
+      'except BaseException as err:',
+      '    _sqlOut["error"] = str(err)',
+      '    try: _sqlOut["databases"] = {name: "\\n".join(db.iterdump()) for name, db in _lab_sql_databases.items()}',
+      '    except Exception: pass',
+      '_sqlOut = json.dumps(_sqlOut, default=str)'
+    ].join("\\n");
+  }
 
 self.onmessage = async function (ev) {
   const msg = ev.data || {};
@@ -714,6 +838,10 @@ self.onmessage = async function (ev) {
 
     if (msg.type === "sql") {
       py.globals.set("_sql", msg.code);
+      py.globals.set("_sqlAction", msg.action || "run");
+      py.globals.set("_sqlDump", msg.dump || "");
+      py.globals.set("_sqlSeed", msg.seed || "");
+      py.globals.set("_sqlDbKey", msg.databaseKey || "students");
       /* sqlite3 ships with Pyodide but is not loaded by default, and the import
          lives inside generated code that loadPackagesFromImports cannot see. */
       try {
@@ -731,7 +859,10 @@ self.onmessage = async function (ev) {
       reply({
         type: "result",
         ok: !res.error, stdout: "", stderr: res.error || "", plots: [], html: [],
-        tables: res.tables || [],
+        tables: res.tables || [], statements: res.statements || [], dump: res.dump || "",
+        schema: res.schema || [], message: res.message || "",
+        transactionOpen: !!res.transactionOpen, selectedDatabase: res.selectedDatabase || msg.databaseKey || "students",
+        databases: res.databases || {},
         time: (performance.now() - t0) / 1000
       });
       return;
@@ -747,7 +878,34 @@ self.onmessage = async function (ev) {
     reply({ type: "fatal", error: detail });
   }
 };
-`;
+  `;
+  }
+
+  function splitSqlStatements(source) {
+    var sql = String(source || "");
+    var statements = [];
+    var start = 0, quote = "", lineComment = false, blockComment = false;
+    for (var i = 0; i < sql.length; i++) {
+      var ch = sql[i], next = sql[i + 1];
+      if (lineComment) { if (ch === "\n") lineComment = false; continue; }
+      if (blockComment) { if (ch === "*" && next === "/") { blockComment = false; i++; } continue; }
+      if (quote) {
+        if (ch === quote) {
+          if (next === quote && quote !== "]") i++;
+          else quote = "";
+        } else if (ch === "\\" && quote !== "]") i++;
+        continue;
+      }
+      if (ch === "-" && next === "-") { lineComment = true; i++; continue; }
+      if (ch === "/" && next === "*") { blockComment = true; i++; continue; }
+      if (ch === "'" || ch === '"' || ch === "`" || ch === "[") { quote = ch === "[" ? "]" : ch; continue; }
+      if (ch === ";") {
+        if (sql.slice(start, i + 1).trim()) statements.push({ start: start, end: i + 1, sql: sql.slice(start, i + 1) });
+        start = i + 1;
+      }
+    }
+    if (sql.slice(start).trim()) statements.push({ start: start, end: sql.length, sql: sql.slice(start) });
+    return statements;
   }
 
   var pythonWorker = null;
@@ -837,6 +995,286 @@ self.onmessage = async function (ev) {
     });
   }
 
+  var sqlWorker = null;
+  var sqlWorkerUrl = null;
+
+  function sqlWorkerSource() {
+    return `
+const SQL_CDN = ${JSON.stringify(SQLJS_CDN)};
+let SQL = null;
+let sqlReady = null;
+let databases = {};
+let selectedDatabase = null;
+let uiDatabaseKey = null;
+let manualTransactions = {};
+let explicitBegins = {};
+let savepointDepths = {};
+
+async function ensureSqlEngine() {
+  if (SQL) return SQL;
+  if (!sqlReady) {
+    sqlReady = (async () => {
+      importScripts(SQL_CDN + "sql-wasm.js");
+      SQL = await initSqlJs({ locateFile: file => SQL_CDN + file });
+      return SQL;
+    })();
+  }
+  return sqlReady;
+}
+
+function decodeDatabase(encoded) {
+  const binary = atob(encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function encodeDatabase(database) {
+  const bytes = database.export();
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(offset, Math.min(offset + 0x8000, bytes.length)));
+  }
+  return btoa(binary);
+}
+
+function openDatabase(name, saved, seed) {
+  if (!databases[name]) {
+    const encoded = saved[name];
+    if (encoded) {
+      try {
+        databases[name] = new SQL.Database(decodeDatabase(encoded));
+      } catch (error) {
+        // Migrate pre-WASM local saves, which were stored as SQLite dump text.
+        databases[name] = new SQL.Database();
+        databases[name].exec(String(encoded));
+      }
+    } else databases[name] = new SQL.Database();
+    if (!encoded && seed) databases[name].exec(seed);
+    databases[name].run("PRAGMA foreign_keys = ON;");
+    manualTransactions[name] = false;
+    explicitBegins[name] = false;
+    savepointDepths[name] = 0;
+  }
+  return databases[name];
+}
+
+function splitStatements(source) {
+  const sql = String(source || "");
+  const statements = [];
+  let start = 0, quote = "", lineComment = false, blockComment = false;
+  for (let i = 0; i < sql.length; i++) {
+    const ch = sql[i], next = sql[i + 1];
+    if (lineComment) { if (ch === "\\n") lineComment = false; continue; }
+    if (blockComment) { if (ch === "*" && next === "/") { blockComment = false; i++; } continue; }
+    if (quote) {
+      if (ch === quote) {
+        if (next === quote && quote !== "]") i++;
+        else quote = "";
+      } else if (ch === "\\\\" && quote !== "]") i++;
+      continue;
+    }
+    if (ch === "-" && next === "-") { lineComment = true; i++; continue; }
+    if (ch === "/" && next === "*") { blockComment = true; i++; continue; }
+    if (ch === "'" || ch === '\"' || ch === "\`" || ch === "[") { quote = ch === "[" ? "]" : ch; continue; }
+    if (ch === ";") {
+      if (sql.slice(start, i + 1).trim()) statements.push(sql.slice(start, i + 1).trim());
+      start = i + 1;
+    }
+  }
+  if (sql.slice(start).trim()) statements.push(sql.slice(start).trim());
+  return statements;
+}
+
+function stripLeadingSqlComments(source) {
+  let text = String(source || "");
+  while (true) {
+    text = text.trimStart();
+    if (text.startsWith("--")) {
+      const newline = text.indexOf("\\n");
+      text = newline < 0 ? "" : text.slice(newline + 1);
+      continue;
+    }
+    if (text.startsWith("/*")) {
+      const close = text.indexOf("*/", 2);
+      text = close < 0 ? "" : text.slice(close + 2);
+      continue;
+    }
+    return text;
+  }
+}
+
+function safeDatabaseName(name) {
+  return !!name && (/[A-Za-z_]/).test(name[0]) && Array.from(name).every(ch => /[A-Za-z0-9_]/.test(ch));
+}
+
+function runSql(message) {
+  let saved = message.dump || {};
+  if (typeof saved === "string") {
+    try { saved = JSON.parse(saved); } catch (error) { saved = {}; }
+  }
+  if (!saved || typeof saved !== "object" || Array.isArray(saved)) saved = {};
+  const seed = message.seed || "";
+  const dbKey = message.databaseKey || "students";
+  if (uiDatabaseKey !== dbKey) {
+    selectedDatabase = dbKey;
+    uiDatabaseKey = dbKey;
+  }
+  if (message.action === "reset") {
+    if (databases[dbKey]) databases[dbKey].close();
+    delete databases[dbKey];
+    manualTransactions[dbKey] = false;
+    explicitBegins[dbKey] = false;
+    savepointDepths[dbKey] = 0;
+    selectedDatabase = dbKey;
+    uiDatabaseKey = dbKey;
+    openDatabase(dbKey, {}, seed);
+  }
+  let error = "";
+  let failedStatement = "";
+  const results = [];
+  const statements = [];
+  if (message.action !== "reset") {
+    const query = splitStatements(message.code || "");
+    const explicitTransaction = query.some(s => /^(BEGIN|SAVEPOINT)\\b/i.test(stripLeadingSqlComments(s)));
+    const hasDatabaseSwitch = query.some(s => /^(CREATE\\s+DATABASE|USE)\\b/i.test(stripLeadingSqlComments(s)));
+    let current = openDatabase(selectedDatabase || dbKey, saved, selectedDatabase === dbKey ? seed : "");
+    const shouldWrap = !explicitTransaction && !manualTransactions[selectedDatabase] && !hasDatabaseSwitch && query.length > 0;
+    if (shouldWrap) current.run("SAVEPOINT __dslab_query;");
+    for (const statement of query) {
+      try {
+        const command = stripLeadingSqlComments(statement).replace(/;\\s*$/, "").trim();
+        if (!command) continue;
+        const tokens = command.split(/\\s+/);
+        const words = tokens.map(token => token.toUpperCase());
+        if (words[0] === "CREATE" && words[1] === "DATABASE") {
+          let offset = 2;
+          const ifNotExists = words.slice(2, 5).join(" ") === "IF NOT EXISTS";
+          if (ifNotExists) offset = 5;
+          if (tokens.length !== offset + 1) throw new Error("Supported compatibility syntax: CREATE DATABASE [IF NOT EXISTS] simple_name;");
+          const name = tokens[offset];
+          if (!safeDatabaseName(name)) throw new Error("Database names must be unquoted identifiers containing letters, digits or underscores.");
+          if (databases[name] || saved[name]) {
+            if (!ifNotExists) throw new Error("Database already exists: " + name);
+            openDatabase(name, saved, "");
+            statements.push({ sql: statement.slice(0, 120), affected: -1, message: "Database already exists: " + name });
+          } else {
+            databases[name] = new SQL.Database();
+            databases[name].run("PRAGMA foreign_keys = ON;");
+            manualTransactions[name] = false;
+            explicitBegins[name] = false;
+            savepointDepths[name] = 0;
+            statements.push({ sql: statement.slice(0, 120), affected: -1, message: "Database ready: " + name });
+          }
+          continue;
+        }
+        if (words[0] === "USE") {
+          if (tokens.length !== 2) throw new Error("Supported compatibility syntax: USE simple_name;");
+          const name = tokens[1];
+          if (!safeDatabaseName(name)) throw new Error("Database names must be unquoted identifiers containing letters, digits or underscores.");
+          if (!databases[name] && !saved[name]) throw new Error("Unknown database: " + name + ". Create it first with CREATE DATABASE " + name + ";");
+          openDatabase(name, saved, "");
+          selectedDatabase = name;
+          current = databases[name];
+          statements.push({ sql: statement.slice(0, 120), affected: -1, message: "Using database: " + name });
+          continue;
+        }
+        current = openDatabase(selectedDatabase, saved, selectedDatabase === dbKey ? seed : "");
+        const output = current.exec(statement);
+        const control = words[0] || "";
+        if (control === "BEGIN") {
+          explicitBegins[selectedDatabase] = true;
+          manualTransactions[selectedDatabase] = true;
+        } else if (control === "SAVEPOINT") {
+          savepointDepths[selectedDatabase] = (savepointDepths[selectedDatabase] || 0) + 1;
+          manualTransactions[selectedDatabase] = true;
+        } else if (control === "COMMIT" || control === "END" || (control === "ROLLBACK" && !/\\bTO\\b/i.test(statement))) {
+          explicitBegins[selectedDatabase] = false;
+          savepointDepths[selectedDatabase] = 0;
+          manualTransactions[selectedDatabase] = false;
+        } else if (control === "RELEASE") {
+          savepointDepths[selectedDatabase] = Math.max(0, (savepointDepths[selectedDatabase] || 0) - 1);
+          manualTransactions[selectedDatabase] = !!explicitBegins[selectedDatabase] || savepointDepths[selectedDatabase] > 0;
+        }
+        const affected = ["INSERT", "UPDATE", "DELETE", "REPLACE"].includes(control) || control === "WITH"
+          ? current.getRowsModified() : -1;
+        const item = { sql: statement.slice(0, 120), affected: affected };
+        (output || []).forEach(table => {
+          const rows = (table.values || []).slice(0, 500);
+          const result = { columns: table.columns || [], rows: rows, truncated: (table.values || []).length > 500 };
+          results.push(result);
+          item.columns = result.columns;
+          item.rows = rows;
+          item.truncated = result.truncated;
+        });
+        statements.push(item);
+      } catch (exception) {
+        error = String(exception && exception.message || exception);
+        failedStatement = statement.slice(0, 120);
+        break;
+      }
+    }
+    if (shouldWrap) {
+      try {
+        if (error) {
+          current.run("ROLLBACK TO __dslab_query;");
+          current.run("RELEASE __dslab_query;");
+        } else current.run("RELEASE __dslab_query;");
+      } catch (transactionError) {
+        if (!error) error = String(transactionError.message || transactionError);
+      }
+    }
+  }
+
+  const dumps = {};
+  Object.keys(databases).forEach(name => { dumps[name] = encodeDatabase(databases[name]); });
+  const db = openDatabase(selectedDatabase || dbKey, saved, selectedDatabase === dbKey ? seed : "");
+  const schemaOutput = db.exec("SELECT name, type FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%' ORDER BY type, name;");
+  const schema = schemaOutput.length ? schemaOutput[0].values : [];
+  const version = db.exec("SELECT sqlite_version();")[0].values[0][0];
+  return {
+    ok: !error, error: error, failedStatement: failedStatement, tables: results,
+    statements: statements, dump: dumps[selectedDatabase || dbKey] || "", databases: dumps,
+    selectedDatabase: selectedDatabase || dbKey, schema: schema, engineVersion: version,
+    transactionOpen: Object.values(manualTransactions).some(Boolean),
+    message: message.action === "reset" ? "Sample database restored." : ""
+  };
+}
+
+self.onmessage = async event => {
+  const message = event.data || {};
+  const id = message.__id || null;
+  const started = performance.now();
+  try {
+    await ensureSqlEngine();
+    const result = runSql(message);
+    result.__id = id;
+    result.time = (performance.now() - started) / 1000;
+    postMessage(result);
+  } catch (error) {
+    postMessage({ __id: id, ok: false, error: String(error && error.message || error),
+      tables: [], statements: [], schema: [], databases: {}, selectedDatabase: message.databaseKey || "students",
+      time: (performance.now() - started) / 1000 });
+  }
+};
+`;
+  }
+
+  function ensureSqlWorker() {
+    if (sqlWorker) return sqlWorker;
+    var blob = new Blob([sqlWorkerSource()], { type: "text/javascript" });
+    sqlWorkerUrl = URL.createObjectURL(blob);
+    sqlWorker = new Worker(sqlWorkerUrl);
+    return sqlWorker;
+  }
+
+  function killSqlWorker() {
+    if (sqlWorker) { try { sqlWorker.terminate(); } catch (e) {} }
+    if (sqlWorkerUrl) { try { URL.revokeObjectURL(sqlWorkerUrl); } catch (e) {} }
+    sqlWorker = null;
+    sqlWorkerUrl = null;
+  }
+
   var Engines = {};
 
   Engines.pyodide = {
@@ -853,14 +1291,21 @@ self.onmessage = async function (ev) {
           };
         });
     },
-    sql: function (code) {
+    sql: function (code, options) {
       var w = ensurePythonWorker();
-      return postToWorker(w, { type: "sql", code: code },
+      options = options || {};
+      return postToWorker(w, {
+      type: "sql", code: code, action: options.action || "run", databaseKey: options.databaseKey || "students",
+        dump: options.dump || "", seed: options.seed || SQL_SEED
+      },
                           WORKER_TIMEOUT_MS + PYODIDE_LOAD_TIMEOUT_MS)
         .then(function (r) {
           if (r.type === "fatal") throw new Error(r.error);
           return {
             stdout: r.stdout, stderr: r.stderr, plots: [], tables: r.tables,
+            statements: r.statements, dump: r.dump, schema: r.schema,
+            message: r.message, transactionOpen: r.transactionOpen,
+            selectedDatabase: r.selectedDatabase, databases: r.databases,
             time: r.time, ok: r.ok
           };
         });
@@ -869,6 +1314,29 @@ self.onmessage = async function (ev) {
       return postToWorker(ensurePythonWorker(), { type: "ping" }, PYODIDE_LOAD_TIMEOUT_MS);
     },
     stop: function () { killPythonWorker(); }
+  };
+
+  Engines.sqlite = {
+    label: "SQLite compiled to WebAssembly in this browser",
+    sql: function (code, options) {
+      options = options || {};
+      return postToWorker(ensureSqlWorker(), {
+        type: "sql", code: code, action: options.action || "run",
+        databaseKey: options.databaseKey || "students",
+        dump: options.dump || {}, seed: options.seed || SQL_SEED
+      }, WORKER_TIMEOUT_MS + 60000).then(function (result) {
+        if (result.type === "fatal") throw new Error(result.error);
+        return {
+          ok: result.ok !== false, stdout: "", stderr: result.error || "", plots: [], html: [],
+          tables: result.tables || [], statements: result.statements || [],
+          dump: result.dump || "", databases: result.databases || {}, schema: result.schema || [],
+          message: result.message || "", transactionOpen: !!result.transactionOpen,
+          selectedDatabase: result.selectedDatabase || options.databaseKey || "students",
+          engineVersion: result.engineVersion || "SQLite", time: result.time || 0
+        };
+      });
+    },
+    stop: function () { killSqlWorker(); }
   };
 
   Engines.workerjs = {
@@ -2023,7 +2491,9 @@ self.onmessage = async function (ev) {
       running: false,
       fileId: store.activeId || null,
       notebook: null,
-      notebookFileId: null
+      notebookFileId: null,
+      sqlDatabase: "students",
+      sqlCurrentDatabase: "students"
     };
 
     var editor = null;
@@ -2140,6 +2610,27 @@ self.onmessage = async function (ev) {
       '<div class="lab2">' +
         '<div class="lab2-banner" id="lab2Banner"></div>' +
         toolbarHtml() +
+      '<section class="sql-tools" id="sqlTools" aria-label="SQL database tools" hidden>' +
+          '<div class="sql-tools__row">' +
+            '<span class="sql-engine"><span aria-hidden="true">●</span> SQLite WASM · MySQL-style database selector</span>' +
+            '<label class="lab2-field sql-tools__database"><span class="lab2-field__label">Sample database</span>' +
+              '<select class="lab2-select" id="sqlDatabase" aria-label="Sample database">' +
+                '<option value="students">Students, departments, courses &amp; employees</option>' +
+                '<option value="employees">Employees</option>' +
+              '</select>' +
+            '</label>' +
+            '<label class="lab2-field sql-tools__example"><span class="lab2-field__label">Query library</span>' +
+              '<select class="lab2-select" id="sqlExample" aria-label="SQL query examples"><option value="">Choose a SQL example...</option>' +
+                SQL_EXAMPLES.map(function (example, i) { return '<option value="' + i + '">' + esc(example.level + " · " + example.title) + '</option>'; }).join("") +
+              '</select>' +
+            '</label>' +
+            '<button class="lab2-mini sql-load" id="sqlLoadExample" type="button">Load example</button>' +
+            '<button class="lab2-mini sql-runall" id="sqlRunAll" type="button">Run All</button>' +
+            '<button class="lab2-mini" id="sqlClearEditor" type="button">Clear Editor</button>' +
+            '<button class="lab2-mini" id="sqlResetDb" type="button">Reset Database</button>' +
+          '</div>' +
+            '<p class="sql-example-desc" id="sqlExampleDesc">Runs against a local SQLite database. Changes stay in this browser and persist across refreshes. <span id="sqlStatus" aria-live="polite">Saved in this browser</span></p>' +
+        '</section>' +
         '<div class="lab2-grid">' +
           '<section class="lab2-left">' +
             '<div class="lab2-panel lab2-panel--editor" id="editorPanel">' +
@@ -2171,9 +2662,9 @@ self.onmessage = async function (ev) {
             '<div class="lab2-notebook" id="notebookHost" hidden></div>' +
           "</section>" +
           '<section class="lab2-right">' +
-            '<div class="lab2-panel lab2-panel--io">' +
+            '<div class="lab2-panel lab2-panel--io" id="stdinPanel">' +
               '<div class="lab2-panel__head">' +
-                '<span class="lab2-panel__title">Input (stdin)</span>' +
+                '<span class="lab2-panel__title" id="stdinTitle">Input (stdin)</span>' +
                 '<span class="lab2-panel__spacer"></span>' +
               "</div>" +
               '<textarea class="lab2-stdin" id="stdinBox" spellcheck="false" ' +
@@ -2234,6 +2725,8 @@ self.onmessage = async function (ev) {
         var url = readConfig().judge0Url || JUDGE0_URL;
         bits.push("compiled and run in an isolated container on <code>" + esc(url) +
                   "</code>, so the source is uploaded to that service");
+      } else if (l.engine === "sqlite") {
+        bits.push("SQLite " + esc(l.version) + " runs in a WebAssembly worker. CREATE DATABASE and USE select separate browser-local databases; this is not a full MySQL server.");
       } else if (l.engine === "pyodide") {
         bits.push("runs on CPython " + esc(l.version) +
                   " compiled to WebAssembly inside a sandboxed worker; nothing is uploaded");
@@ -2243,6 +2736,18 @@ self.onmessage = async function (ev) {
         bits.push("runs in a sandboxed Web Worker; nothing is uploaded");
       }
       els.banner.innerHTML = bits.join(" &middot; ");
+    }
+
+    function paintSqlTools() {
+      var isSql = state.langId === "sql";
+      els.sqlTools.hidden = !isSql;
+      els.stdinPanel.hidden = isSql;
+      els.runBtn.innerHTML = ICON.play + (isSql ? " Run Query" : " Run code");
+      if (isSql) {
+        els.sqlDatabase.value = state.sqlDatabase;
+        els.sqlStatus.textContent = "Selected database: " + state.sqlCurrentDatabase +
+          (sqlSavedDatabases()[state.sqlCurrentDatabase] ? " · Saved in this browser" : " · Local practice data");
+      }
     }
 
     function paintFileMeta() {
@@ -2303,6 +2808,27 @@ self.onmessage = async function (ev) {
 
     function clearFigs() { els.figs.innerHTML = ""; }
 
+    function sqlSavedDatabases() {
+      try {
+        var all = JSON.parse(localStorage.getItem(SQL_STORE_KEY) || "{}");
+        return all && typeof all === "object" && !Array.isArray(all) ? all : {};
+      } catch (e) { return {}; }
+    }
+
+    function saveSqlDatabases(databases, selected) {
+      if (databases && typeof databases === "object") {
+        var all = sqlSavedDatabases();
+        Object.keys(databases).forEach(function (name) { all[name] = databases[name]; });
+        try {
+          localStorage.setItem(SQL_STORE_KEY, JSON.stringify(all));
+          els.sqlStatus.textContent = "Selected database: " + (selected || state.sqlCurrentDatabase) + " · Saved in this browser";
+        } catch (e) {
+          els.sqlStatus.textContent = "Browser storage unavailable · database is in this session only";
+        }
+      }
+      if (selected) state.sqlCurrentDatabase = selected;
+    }
+
     function setIdle(msg) {
       els.console.innerHTML = '<div class="lab2-console__idle">' + esc(msg) + "</div>";
       els.runMeta.textContent = "";
@@ -2324,7 +2850,9 @@ self.onmessage = async function (ev) {
           return "<th>" + esc(c) + "</th>";
         }).join("") + "</tr>";
         var body = (t.rows || []).map(function (row) {
-          return "<tr>" + row.map(function (v) { return "<td>" + esc(v) + "</td>"; }).join("") + "</tr>";
+          return "<tr>" + row.map(function (v) {
+            return '<td' + (v == null ? ' class="sql-null"' : "") + ">" + (v == null ? "NULL" : esc(v)) + "</td>";
+          }).join("") + "</tr>";
         }).join("");
         return '<div class="lab2-table-wrap"><table class="lab2-table"><thead>' + head +
           "</thead><tbody>" + (body || "<tr><td>(no rows)</td></tr>") + "</tbody></table></div>";
@@ -2339,6 +2867,16 @@ self.onmessage = async function (ev) {
       if (r.stderr && r.stderr.trim()) html += consoleBlock("Error", r.stderr.replace(/\s+$/, ""), "err");
       if (r.stdout && r.stdout.trim()) html += consoleBlock("Output", r.stdout.replace(/\s+$/, ""), "out");
       if (r.value) html += consoleBlock("Result", r.value, "out");
+      if (r.message) html += consoleBlock("Database", r.message, "out");
+      if (r.statements && r.statements.length) {
+        html += '<div class="sql-statement-status">' + r.statements.map(function (s, i) {
+          return '<div><b>' + (s.columns ? "Result set" : "Statement") + " " + (i + 1) + "</b>" +
+            (s.columns ? " · " + s.rows.length + (s.truncated ? "+" : "") + " rows returned" :
+              (s.affected < 0 ? " · completed" : " · " + s.affected + " rows affected")) +
+            (s.message ? " · " + esc(s.message) : "") +
+            '<code>' + esc(s.sql) + '</code></div>';
+        }).join("") + '</div>';
+      }
       if (!ok && !r.stderr && !r.compile && !r.stdout) {
         html += consoleBlock("Error",
           "The program finished with status " + (r.status || "unknown") + ".", "err");
@@ -2353,14 +2891,21 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
         if (safe) html += '<div class="lab2-richtext">' + safe + "</div>";
       }
       html += tablesHtml(r.tables);
+      if (r.schema && r.schema.length) {
+        html += '<div class="sql-schema"><b>Database objects</b>' + r.schema.map(function (item) {
+          return '<span>' + esc(item[1]) + ' · ' + esc(item[0]) + '</span>';
+        }).join("") + '</div>';
+      }
 
       els.console.innerHTML = html;
 
       var meta = [];
       if (r.time != null) meta.push("Execution time: " + r.time.toFixed(2) + " s");
+      if (state.langId === "sql" && r.engineVersion) meta.push("SQLite " + r.engineVersion);
       if (r.memory != null) meta.push("Memory: " + Math.round(r.memory) + " KB");
       if (r.status) meta.push(r.status);
-      meta.push(ok ? "Program executed successfully." : "Program failed.");
+      meta.push(ok ? (state.langId === "sql" ? "SQL executed successfully." : "Program executed successfully.") :
+        (state.langId === "sql" ? "SQL execution failed." : "Program failed."));
       els.runMeta.textContent = meta.join(" | ");
 
       clearFigs();
@@ -2401,10 +2946,10 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       state.running = on;
       els.runBtn.disabled = on;
       els.stopBtn.hidden = !on;
-      els.runBtn.innerHTML = on ? ICON.stop + " Running" : ICON.play + " Run code";
+      els.runBtn.innerHTML = on ? ICON.stop + " Running" : ICON.play + (state.langId === "sql" ? " Run Query" : " Run code");
     }
 
-    function run() {
+    function run(runAll) {
       if (state.running) return;
       var l = lang();
       var code = currentCode();
@@ -2412,21 +2957,70 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
 
       if (!code.trim()) { showError(new Error("Write some code first.")); return; }
 
+      if (l.id === "sql" && !runAll) {
+        var selection = editor && editor.getSelection();
+        if (selection && selection.end > selection.start) {
+          code = code.slice(selection.start, selection.end);
+        } else {
+          var statements = splitSqlStatements(code);
+          var cursor = selection ? selection.start : 0;
+          var current = statements.filter(function (s) { return cursor >= s.start && cursor <= s.end; })[0] || statements[0];
+          code = current ? current.sql : code;
+        }
+      }
+
       setRunning(true);
       els.console.innerHTML = '<div class="lab2-console__idle">Running</div>';
       els.runMeta.textContent = "";
       if (editor) editor.clearErrors();
 
       var eng = engineFor(l);
-      var p = (l.id === "sql") ? eng.sql(code) : eng.run(code, stdin, l.id);
+      var p = (l.id === "sql") ? eng.sql(code, {
+        dump: JSON.stringify(sqlSavedDatabases()),
+        seed: state.sqlDatabase === "employees" ? SQL_EMPLOYEE_SEED : SQL_SEED,
+        databaseKey: state.sqlDatabase
+      }) : eng.run(code, stdin, l.id);
 
-      Promise.resolve(p).then(showResult).catch(showError).then(function () {
+      Promise.resolve(p).then(function (result) {
+        if (l.id === "sql" && result.ok) {
+          state.sqlCurrentDatabase = result.selectedDatabase || state.sqlCurrentDatabase;
+          if (result.transactionOpen) els.sqlStatus.textContent = "Transaction open · COMMIT or ROLLBACK to finish";
+          else saveSqlDatabases(result.databases, result.selectedDatabase);
+        }
+        showResult(result);
+      }).catch(showError).then(function () {
         setRunning(false);
       });
     }
 
+    function runAllSql() { run(true); }
+
+    function resetSqlDatabase() {
+      if (state.running) return;
+      ask({ title: "Reset practice database?", message: "This replaces the saved " +
+        (state.sqlDatabase === "employees" ? "Employees" : "Student and Employees") +
+        " sample database in this browser. This cannot be undone.", ok: "Reset database", cancel: "Keep database", kind: "danger" })
+        .then(function (yes) {
+          if (!yes) return;
+          setRunning(true);
+          els.console.innerHTML = '<div class="lab2-console__idle">Restoring sample database…</div>';
+          engineFor(L.sql).sql("", {
+            action: "reset",
+            dump: JSON.stringify(sqlSavedDatabases()),
+            databaseKey: state.sqlDatabase,
+            seed: state.sqlDatabase === "employees" ? SQL_EMPLOYEE_SEED : SQL_SEED
+          }).then(function (result) {
+            if (result.ok) {
+              saveSqlDatabases(result.databases, result.selectedDatabase);
+            }
+            showResult(result);
+          }).catch(showError).then(function () { setRunning(false); });
+        });
+    }
+
     function stop() {
-      killPythonWorker();
+      if (state.langId === "sql") killSqlWorker();
+      else killPythonWorker();
       setRunning(false);
       els.console.innerHTML = consoleBlock("Stopped",
         "Execution was cancelled and the runtime was shut down. " +
@@ -2809,6 +3403,7 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       }
       els.langSelect.value = state.langId;
       els.stdinBox.value = STDIN_DEFAULT[state.langId] || "";
+      paintSqlTools();
 
       els.modeNotebook.disabled = !lang().notebook;
       if (!lang().notebook && state.mode === "notebook") {
@@ -2923,6 +3518,12 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
 
     els = {
       banner: host.querySelector("#lab2Banner"),
+      sqlTools: host.querySelector("#sqlTools"),
+      sqlDatabase: host.querySelector("#sqlDatabase"),
+      sqlExample: host.querySelector("#sqlExample"),
+      sqlExampleDesc: host.querySelector("#sqlExampleDesc"),
+      sqlStatus: host.querySelector("#sqlStatus"),
+      stdinPanel: host.querySelector("#stdinPanel"),
       langSelect: host.querySelector("#langSelect"),
       modeCode: host.querySelector("#modeCode"),
       modeNotebook: host.querySelector("#modeNotebook"),
@@ -3002,6 +3603,14 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
 
     els.langSelect.addEventListener("change", function () {
       var id = els.langSelect.value;
+      var current = activeFile();
+      if (id === "sql" && current && current.lang !== "sql") {
+        var sqlFolder = (store.root.children || []).filter(function (folder) {
+          return folder.type === "folder" && folder.name === "SQL";
+        })[0];
+        var sqlFile = sqlFolder && (sqlFolder.children || []).filter(function (file) { return file.type === "file"; })[0];
+        if (sqlFile) { openFile(sqlFile.id); return; }
+      }
       state.langId = id;
       els.stdinBox.value = STDIN_DEFAULT[id] || "";
       if (editor) editor.setLang(L[id]);
@@ -3017,7 +3626,34 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       if (!L[id].notebook && state.mode === "notebook") setMode("code");
       if (state.mode === "notebook") renderNotebook();
       paintBanner();
+      paintSqlTools();
       setIdle("Ready. Press Run code.");
+    });
+
+    host.querySelector("#sqlRunAll").addEventListener("click", runAllSql);
+    host.querySelector("#sqlClearEditor").addEventListener("click", function () {
+      if (editor) { editor.value = ""; editor.clearErrors(); markModified(); editor.focus(); }
+      setIdle("SQL editor cleared.");
+    });
+    host.querySelector("#sqlResetDb").addEventListener("click", resetSqlDatabase);
+    els.sqlDatabase.addEventListener("change", function () {
+      state.sqlDatabase = els.sqlDatabase.value;
+      state.sqlCurrentDatabase = state.sqlDatabase;
+      els.sqlStatus.textContent = "Selected database: " + state.sqlDatabase +
+        (sqlSavedDatabases()[state.sqlDatabase] ? " · Saved in this browser" : " · Sample database ready");
+    });
+    els.sqlExample.addEventListener("change", function () {
+      var example = SQL_EXAMPLES[parseInt(els.sqlExample.value, 10)];
+      els.sqlExampleDesc.firstChild.textContent = example
+        ? example.description + " "
+        : "Runs against a local SQLite database. Changes stay in this browser and persist across refreshes. ";
+    });
+    host.querySelector("#sqlLoadExample").addEventListener("click", function () {
+      var index = parseInt(els.sqlExample.value, 10);
+      var example = SQL_EXAMPLES[index];
+      if (!example) { toast("Choose an example from the query library first"); return; }
+      if (editor) { editor.value = example.sql; editor.clearErrors(); markModified(); editor.focus(); }
+      setIdle("Example loaded: " + example.title + ". Run the query to see real SQLite results.");
     });
 
     els.modeCode.addEventListener("click", function () { setMode("code"); });
@@ -3086,8 +3722,23 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
       carriedOk = true;
     }
 
-    /* restore the last open file, else seed with the Python sample */
-    if (!carriedOk && state.fileId && findNode(store.root, state.fileId)) {
+    /* Deep links from Resources can open a particular language directly. */
+    var requestedLanguage = opts && L[opts.language] ? opts.language : "";
+    var requestedFile = null;
+    if (!carriedOk && requestedLanguage) {
+      (function findLanguageFile(node) {
+        if (requestedFile) return;
+        (node.children || []).forEach(function (child) {
+          if (child.type === "file" && child.lang === requestedLanguage) requestedFile = child;
+          else if (child.type === "folder") findLanguageFile(child);
+        });
+      })(store.root);
+    }
+
+    /* restore a requested language, the last open file, else Python starter */
+    if (!carriedOk && requestedFile) {
+      openFile(requestedFile.id);
+    } else if (!carriedOk && state.fileId && findNode(store.root, state.fileId)) {
       openFile(state.fileId);
     } else if (!carriedOk) {
       var pyFolder = (store.root.children || []).filter(function (f) {

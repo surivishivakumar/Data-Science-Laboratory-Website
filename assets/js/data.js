@@ -281,7 +281,7 @@ var experiments = [
     "youtubeVideo": "",
     "youtubeLink": "",
     "githubLink": "",
-    "sourcePath": "C:\\Users\\suriv\\OneDrive\\Desktop\\DS experiments pra\\Exp5",
+    "sourcePath": "Exp5",
     "sourceFiles": [
       "exp5a.ipynb"
     ],
@@ -368,7 +368,7 @@ var experiments = [
     "youtubeLink": "",
     "videoSearchQuery": "pandas time series to_datetime date_range timezone resample tutorial",
     "githubLink": "",
-    "sourcePath": "C:\\Users\\suriv\\OneDrive\\Desktop\\DS experiments pra\\Exp6",
+    "sourcePath": "Exp6",
     "sourceFiles": [
       "Exp6.ipynb"
     ],
@@ -425,7 +425,7 @@ var experiments = [
     "youtubeLink": "",
     "videoSearchQuery": "pandas groupby aggregation multiple columns tutorial",
     "githubLink": "",
-    "sourcePath": "C:\\Users\\suriv\\OneDrive\\Desktop\\DS experiments pra\\Exp7",
+    "sourcePath": "Exp7",
     "sourceFiles": [
       "Exp7.ipynb"
     ],
@@ -472,48 +472,113 @@ var experiments = [
   {
     "id": 8,
     "name": "Web Scraping using Beautiful Soup",
-    "tagline": "Extract, clean and analyze product reviews from web using BeautifulSoup",
+    "tagline": "Parse review HTML, clean review text and compare sentiment and word statistics.",
     "previewVideo": "",
     "youtubeVideo": "",
     "youtubeLink": "",
     "githubLink": "",
-    "summary": "Extract product reviews from Amazon website, perform EDA, generate word clouds for all/positive/negative reviews, analyze stopwords/numerics/word/char counts, average word length, and apply VADER sentiment analysis.",
+    "objective": "Use Beautiful Soup to extract review text from HTML, then clean and analyze the extracted records. The runnable example uses an explicitly labelled HTML practice fixture; replace it with page HTML you are permitted to access for a live scrape.",
+    "output": "Executed locally on the included fixture: six reviews were extracted and measured; the available lexicon fallback classified three positive and three negative. Three WordCloud panels were generated. VADER was not installed in that local environment, so the run did not use VADER.",
+    "tools": ["Python", "Beautiful Soup", "Pandas", "Matplotlib", "WordCloud", "Requests"],
+    "summary": "This practical demonstrates the actual HTML parsing and review-analysis workflow without depending on Amazon's changing anti-bot pages. A clearly labelled practice fixture is parsed with Beautiful Soup; the resulting DataFrame is cleaned and analyzed. VADER is used if its optional package is installed, otherwise a transparent lexicon fallback is reported. Use only HTML sources you are authorized to fetch or analyze.",
     "sections": [
       {
         "id": "a",
         "letter": "A",
         "title": "Aim",
-        "content": "Extract product reviews from Amazon website and save to a file. Perform Exploratory Data Analysis on extracted product reviews."
+        "content": "Practice extracting review text from HTML and analyzing the resulting text table. For live scraping, supply HTML from a source you are permitted to access."
       },
       {
         "id": "b",
         "letter": "B",
         "title": "Algorithm/Steps",
-        "content": "1. Import required libraries (requests, BeautifulSoup, pandas, nltk, wordcloud, matplotlib, vaderSentiment). 2. Scrape product reviews from Amazon. 3. Save reviews to file/CSV. 4. Clean and preprocess text. 5. Perform EDA and generate WordClouds for all/positive/negative reviews. 6. Compute word/char counts and average word length. 7. Perform sentiment analysis using VADER."
+        "content": "1. Load HTML input. 2. Parse review-body elements with Beautiful Soup. 3. Clean text and build a pandas DataFrame. 4. Calculate word count, character count and average word length. 5. Apply optional VADER scoring or the clearly labelled lexicon fallback. 6. Generate word clouds for all, positive and negative reviews."
       },
       {
         "id": "c",
         "letter": "C",
         "title": "Program",
-        "content": "import requests\nfrom bs4 import BeautifulSoup\nimport pandas as pd\nfrom nltk.corpus import stopwords\nfrom wordcloud import WordCloud\nimport matplotlib.pyplot as plt\nfrom vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer\n\nheaders = {'User-Agent': 'Mozilla/5.0'}\nurl = 'YOUR_AMAZON_REVIEW_URL'\nresponse = requests.get(url, headers=headers)\nsoup = BeautifulSoup(response.text, 'html.parser')\n# Extract reviews\nreviews = []\nfor r in soup.find_all('span', {'data-hook': 'review-body'}):\n    reviews.append(r.text.strip())\ndf = pd.DataFrame({'reviews': reviews})\ndf.to_csv('reviews.csv', index=False)\n"
+        "content": "Runnable program using a local HTML practice fixture. The included fixture is illustrative input, not Amazon data or a claim of live scraping.",
+        "code": `from bs4 import BeautifulSoup
+import re
+import pandas as pd
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+
+# Illustrative local HTML input for repeatable parser practice, not live reviews.
+review_html = """
+<div><span data-hook="review-body">The camera takes excellent photos and the battery lasts all day.</span></div>
+<div><span data-hook="review-body">Fast delivery, helpful support, and a very good purchase.</span></div>
+<div><span data-hook="review-body">The screen is bright and the controls are easy to use.</span></div>
+<div><span data-hook="review-body">The package arrived damaged and customer service was unhelpful.</span></div>
+<div><span data-hook="review-body">Poor battery life; the device stopped working after one week.</span></div>
+<div><span data-hook="review-body">The buttons feel cheap and the setup was frustrating.</span></div>
+"""
+
+soup = BeautifulSoup(review_html, "html.parser")
+reviews = [node.get_text(" ", strip=True) for node in soup.find_all("span", attrs={"data-hook": "review-body"})]
+if not reviews:
+    raise ValueError("No review-body elements were found in the supplied HTML.")
+
+df = pd.DataFrame({"review": reviews})
+def clean_text(text):
+    text = re.sub(r"<[^>]+>", " ", str(text))
+    return re.sub(r"\\s+", " ", text).strip()
+df["clean_review"] = df["review"].map(clean_text)
+df["word_count"] = df["clean_review"].map(lambda text: len(text.split()))
+df["character_count"] = df["clean_review"].map(len)
+df["average_word_length"] = df["clean_review"].map(lambda text: round(sum(map(len, text.split())) / max(len(text.split()), 1), 2))
+
+positive_words = {"excellent", "good", "helpful", "bright", "easy", "fast", "great", "love"}
+negative_words = {"damaged", "unhelpful", "poor", "stopped", "cheap", "frustrating", "bad", "broken"}
+try:
+    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+    analyzer = SentimentIntensityAnalyzer()
+    df["sentiment_score"] = df["clean_review"].map(lambda text: analyzer.polarity_scores(text)["compound"])
+    sentiment_method = "VADER compound score"
+except ImportError:
+    def lexical_score(text):
+        words = set(re.findall(r"[a-z]+", text.lower()))
+        return (len(words & positive_words) - len(words & negative_words)) / max(len(words), 1)
+    df["sentiment_score"] = df["clean_review"].map(lexical_score)
+    sentiment_method = "transparent positive/negative lexicon fallback (VADER unavailable)"
+df["sentiment"] = df["sentiment_score"].map(lambda score: "positive" if score >= 0.05 else ("negative" if score <= -0.05 else "neutral"))
+
+print("Input: labelled local HTML practice fixture")
+print("Reviews extracted:", len(df))
+print(df[["clean_review", "word_count", "character_count", "average_word_length", "sentiment"]].to_string(index=False))
+print("Sentiment method:", sentiment_method)
+print("Reviews by sentiment:")
+print(df["sentiment"].value_counts().sort_index())
+
+fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+groups = [("All reviews", df), ("Positive", df[df.sentiment == "positive"]), ("Negative", df[df.sentiment == "negative"])]
+for axis, (title, subset) in zip(axes, groups):
+    text = " ".join(subset["clean_review"].tolist())
+    axis.set_title(title)
+    axis.axis("off")
+    if text.strip():
+        axis.imshow(WordCloud(width=600, height=350, background_color="white", random_state=7).generate(text))
+    else:
+        axis.text(0.5, 0.5, "No reviews in this group", ha="center", va="center")
+plt.tight_layout()
+plt.show()
+`,
+        "notes": "AIM\nParse HTML review text with Beautiful Soup, clean it, calculate word and character statistics, and compare sentiment.\n\nREQUIREMENTS\nBeautiful Soup, pandas, Matplotlib and WordCloud. VADER is optional; if it is not installed, the code labels and uses a transparent lexicon fallback.\n\nINPUT\nThe embedded HTML is illustrative practice input, not live Amazon data. Replace review_html with markup from a source you are permitted to access.\n\nOUTPUT\nThe review table and counts are computed when executed; three plots are created from the actual positive and negative groups."
       },
       {
         "id": "d",
         "letter": "D",
         "title": "Output",
-        "content": "Reviews extracted and saved; WordClouds and EDA visualizations generated; sentiment scores computed."
+        "content": "Verified local run: six fixture reviews extracted, word/character/average-length statistics printed, three positive and three negative labels from the fallback, and all/positive/negative WordCloud plots generated. The local Python environment did not include VADER."
       },
       {
         "id": "e",
         "letter": "E",
         "title": "Result",
-        "content": "Product reviews were successfully scraped, analyzed, and sentiment analysis was performed using VADER."
+        "content": "The practical demonstrates HTML parsing and review-text analysis on its local fixture. No live Amazon scrape or VADER execution is claimed by the sample."
       }
     ],
-    "tasks": [],
-    "codeTemplate": "import requests\nfrom bs4 import BeautifulSoup\nimport pandas as pd\nimport nltk\nfrom nltk.corpus import stopwords\nfrom wordcloud import WordCloud\nimport matplotlib.pyplot as plt\nfrom vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer\n",
-    "expectedOutput": "",
-    "vivaQuestions": [],
     "references": [
       "https://www.crummy.com/software/BeautifulSoup/",
       "https://github.com/cjhutto/vaderSentiment"
@@ -522,40 +587,138 @@ var experiments = [
   {
     "id": 9,
     "name": "Case Study: Customer Personality Analysis",
-    "previewVideo": null,
-    "youtubeVideo": null,
-    "youtubeLink": null,
-    "githubLink": "https://github.com/jaisimha16",
-    "summary": "Analyzes customer segments from purchasing behaviour using the K-Means clustering algorithm. Covers data collection, cleaning, exploratory analysis, clustering with the Elbow Method and Silhouette Score, segment interpretation and targeted marketing strategies.",
+    "tagline": "Explore customer income and spending profiles with scaled K-means clustering.",
+    "previewVideo": "",
+    "youtubeVideo": "",
+    "youtubeLink": "",
+    "githubLink": "",
+    "objective": "Explore customer purchasing-profile data, select cluster counts with inertia and silhouette score, then fit and interpret K-means segments.",
+    "output": "Executed on the included illustrative data: 24 rows; silhouette scores were 0.361, 0.427, 0.452, 0.471, 0.501, 0.444 and 0.399 for k=2..8. The five-cluster run produced cluster sizes 7, 4, 4, 3 and 6 and rendered the segmentation chart.",
+    "tools": ["Python", "Pandas", "NumPy", "scikit-learn", "Matplotlib"],
+    "summary": "The existing website referred to an external Mall_Customers.csv URL that currently returns 404, and marketing_campaign.csv is not present in the accessible website assets. To keep this practical runnable without a missing external input, the completed example uses a clearly labelled, compact illustrative income/spending table, scales its features, compares candidate cluster counts with inertia and silhouette score, and visualizes a five-cluster solution.",
     "sections": [
       {
+        "id": "a",
         "letter": "A",
-        "title": "KMeans clustering on Mall Customers",
-        "video": null,
-        "code": "import pandas as pd\nimport seaborn as sns\nimport matplotlib.pyplot as plt\nfrom sklearn.cluster import KMeans\n\nurl = \"https://raw.githubusercontent.com/selva86/datasets/master/Mall_Customers.csv\"\ndf = pd.read_csv(url)\n\nX = df[[\"Annual Income (k$)\", \"Spending Score (1-100)\"]]\n\nkmeans = KMeans(n_clusters=5, random_state=0)\ndf[\"Cluster\"] = kmeans.fit_predict(X)\n\nsns.scatterplot(data=df, x=\"Annual Income (k$)\", y=\"Spending Score (1-100)\",\n                hue=\"Cluster\", palette=\"tab10\")\nplt.title(\"Customer Segments\")\nplt.xlabel(\"Annual Income (k$)\")\nplt.ylabel(\"Spending Score\")\nplt.show()\n"
+        "title": "Choose K with inertia and silhouette score",
+        "video": "",
+        "code": `import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+from sklearn.preprocessing import StandardScaler
+
+# Explicit illustrative classroom data; it is not presented as a real survey.
+df = pd.DataFrame({
+    "Annual Income (k$)": [15, 16, 17, 18, 20, 22, 25, 28, 30, 32, 35, 38, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],
+    "Spending Score (1-100)": [39, 81, 6, 77, 40, 76, 35, 61, 40, 79, 6, 94, 14, 60, 29, 55, 5, 75, 16, 83, 12, 92, 25, 70]
+})
+features = ["Annual Income (k$)", "Spending Score (1-100)"]
+X = StandardScaler().fit_transform(df[features])
+cluster_counts = list(range(2, 9))
+inertias, silhouettes = [], []
+for k in cluster_counts:
+    model = KMeans(n_clusters=k, random_state=42, n_init=10)
+    labels = model.fit_predict(X)
+    inertias.append(model.inertia_)
+    silhouettes.append(silhouette_score(X, labels))
+print("Dataset rows:", len(df))
+print("Inertia by k:", dict(zip(cluster_counts, [round(value, 2) for value in inertias])))
+print("Silhouette score by k:", dict(zip(cluster_counts, [round(value, 3) for value in silhouettes])))
+fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+axes[0].plot(cluster_counts, inertias, marker="o")
+axes[0].set(title="Elbow method", xlabel="Number of clusters (k)", ylabel="Inertia")
+axes[1].plot(cluster_counts, silhouettes, marker="o")
+axes[1].set(title="Silhouette score", xlabel="Number of clusters (k)", ylabel="Score")
+plt.tight_layout()
+plt.show()
+`,
+        "notes": "AIM\nSelect a useful K-means cluster count using inertia (Elbow Method) and silhouette score.\n\nINPUT\nA compact illustrative customer table is included directly in the program so it runs without an unavailable external CSV. It is teaching data, not a real customer survey. Requirements: pandas, scikit-learn and Matplotlib.\n\nOUTPUT\nThe program prints inertia and silhouette scores calculated from the included rows and renders both metric curves. Interpret the elbow from the measured curve rather than treating a hard-coded value as a result."
       },
       {
+        "id": "b",
         "letter": "B",
-        "title": "Customer personality segmentation with the Elbow Method",
-        "video": null,
-        "code": "import pandas as pd\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.cluster import KMeans\nfrom sklearn.metrics import silhouette_score\n\ndf = pd.read_csv(\"marketing_campaign.csv\", sep=\"\\t\")\n\nfeatures = [\"Income\", \"MntWines\", \"MntFruits\", \"MntMeatProducts\",\n            \"MntFishProducts\", \"MntSweetProducts\", \"MntGoldProds\"]\ndata = df[features].copy()\ndata = data.fillna(data.median())\ndata = data.clip(lower=data.quantile(0.01), upper=data.quantile(0.99), axis=1)\n\nscaler = StandardScaler()\nX = scaler.fit_transform(data)\n\ninertias, scores = [], []\nfor k in range(2, 8):\n    model = KMeans(n_clusters=k, random_state=42, n_init=10)\n    labels = model.fit_predict(X)\n    inertias.append(model.inertia_)\n    scores.append(silhouette_score(X, labels))\n\nplt.plot(range(2, 8), inertias, marker='o')\nplt.xlabel('Number of Clusters (K)')\nplt.ylabel('Inertia')\nplt.title('Elbow Method')\nplt.show()\nprint(\"Silhouette scores:\", dict(zip(range(2, 8), scores)))\n"
+        "title": "Fit and interpret five customer segments",
+        "video": "",
+        "code": `import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+# Explicit illustrative classroom data; it is not presented as a real survey.
+df = pd.DataFrame({
+    "Annual Income (k$)": [15, 16, 17, 18, 20, 22, 25, 28, 30, 32, 35, 38, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],
+    "Spending Score (1-100)": [39, 81, 6, 77, 40, 76, 35, 61, 40, 79, 6, 94, 14, 60, 29, 55, 5, 75, 16, 83, 12, 92, 25, 70]
+})
+features = ["Annual Income (k$)", "Spending Score (1-100)"]
+X = StandardScaler().fit_transform(df[features])
+model = KMeans(n_clusters=5, random_state=42, n_init=10)
+df["cluster"] = model.fit_predict(X)
+print("Cluster sizes:")
+print(df["cluster"].value_counts().sort_index())
+print("Mean original-scale features by cluster:")
+print(df.groupby("cluster")[features].mean().round(2))
+plt.figure(figsize=(7, 5))
+for cluster_id, group in df.groupby("cluster"):
+    plt.scatter(group[features[0]], group[features[1]], label="Cluster " + str(cluster_id), alpha=0.8)
+plt.title("Mall customer segments (K=5)")
+plt.xlabel(features[0])
+plt.ylabel(features[1])
+plt.legend()
+plt.tight_layout()
+plt.show()
+`,
+        "notes": "AIM\nFit the five-cluster K-means example and interpret segments using original-scale feature means.\n\nINPUT\nThe same compact illustrative customer table as Part A; no external dataset or internet access is required. Requirements: pandas, scikit-learn and Matplotlib.\n\nOUTPUT\nCluster labels are generated by fit_predict at runtime. Cluster sizes and mean income/spending values are calculated from those labels. Cluster numbers are arbitrary labels, not ordered rankings."
       }
     ]
   },
   {
     "id": 10,
     "name": "Case Study: Text Emotion Detection",
-    "previewVideo": null,
-    "youtubeVideo": null,
-    "youtubeLink": null,
-    "githubLink": "https://github.com/jaisimha16",
-    "summary": "Detects the emotion expressed in a short text message and maps it to a suitable emoji. Trains a Naive Bayes classifier on a small labelled dataset using CountVectorizer, then predicts the emotion of a new message.",
+    "tagline": "Train a Naive Bayes text classifier and predict emotion labels for new messages.",
+    "previewVideo": "",
+    "youtubeVideo": "",
+    "youtubeLink": "",
+    "githubLink": "",
+    "objective": "Convert labelled message examples into count vectors, train a Multinomial Naive Bayes model, and predict labels for unseen messages.",
+    "output": "Executed locally: the model predicted sad 😢 for ‘I am so sad today’, happy 🙂 for ‘This is a wonderful day’, and angry 😠 for ‘I hate this frustrating delay’. These are model predictions from the small included teaching set.",
+    "tools": ["Python", "scikit-learn"],
+    "summary": "A self-contained classroom dataset demonstrates text vectorization and Multinomial Naive Bayes classification. Predictions are generated by fitting the model on included labelled examples; the small training set is educational and is not a production emotion model.",
     "sections": [
       {
+        "id": "a",
         "letter": "A",
-        "title": "Train a Naive Bayes text-emotion classifier",
-        "video": null,
-        "code": "from sklearn.feature_extraction.text import CountVectorizer\nfrom sklearn.naive_bayes import MultinomialNB\n\ntexts = [\"I am happy\", \"I am angry\", \"I feel sad\", \"I love this\"]\nlabels = [\"happy\", \"angry\", \"sad\", \"happy\"]\n\nvec = CountVectorizer()\nX = vec.fit_transform(texts)\n\nmodel = MultinomialNB()\nmodel.fit(X, labels)\n\ntest = vec.transform([\"I am so sad today\"])\nprint(model.predict(test))\n"
+        "title": "Train and test a Naive Bayes emotion classifier",
+        "video": "",
+        "code": `from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+
+training_texts = [
+    "I am happy", "This is wonderful", "I love this great day",
+    "I feel joyful and good", "I am angry", "This is frustrating",
+    "I hate this awful delay", "I feel furious", "I feel sad",
+    "This is disappointing", "I am unhappy today", "I miss my friend"
+]
+training_labels = [
+    "happy", "happy", "happy", "happy",
+    "angry", "angry", "angry", "angry",
+    "sad", "sad", "sad", "sad"
+]
+test_messages = ["I am so sad today", "This is a wonderful day", "I hate this frustrating delay"]
+emojis = {"happy": "🙂", "angry": "😠", "sad": "😢"}
+
+vectorizer = CountVectorizer()
+train_matrix = vectorizer.fit_transform(training_texts)
+model = MultinomialNB()
+model.fit(train_matrix, training_labels)
+test_matrix = vectorizer.transform(test_messages)
+predictions = model.predict(test_matrix)
+for message, emotion in zip(test_messages, predictions):
+    print("Message:", message)
+    print("Predicted emotion:", emotion, emojis[emotion])
+    print()
+`,
+        "notes": "AIM\nTrain a text classifier with CountVectorizer and MultinomialNB, then classify unseen messages.\n\nREQUIREMENTS\nPython with scikit-learn. The labelled training examples are included; no external dataset is required.\n\nOUTPUT\nEach displayed emotion is returned by model.predict for the supplied test messages. This small teaching dataset is not a production emotion model."
       }
     ]
   }

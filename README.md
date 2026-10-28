@@ -194,7 +194,7 @@ self-contained.
 |---|---|---|
 | Python 3.12 | Pyodide (CPython -> WebAssembly) in a Worker | first run only |
 | JavaScript | Web Worker | no |
-| SQL | SQLite via Pyodide | first run only |
+| SQL | SQLite compiled to WebAssembly in a dedicated Worker | first run only |
 | HTML / CSS | sandboxed `<iframe>` | no |
 | Java, C, C++, C#, Go, Rust, Kotlin, PHP, Ruby, Bash, Swift, Scala, Perl, R, Elixir | Judge0 container | yes, every run |
 
@@ -203,6 +203,30 @@ Judge0 instance (`https://ce.judge0.com` by default), which builds and runs them
 in a container and returns stdout, stderr, compiler diagnostics, execution time
 and memory. **Your source code leaves your machine for those languages only.**
 Python, JavaScript, SQL, HTML and CSS never leave the browser.
+
+### SQL practice mode
+
+Choose **SQL** in Code Run to open the SQLite practice controls. The compiler
+executes genuine SQLite statements in a dedicated WebAssembly worker. **Run Query**
+executes the selected text, or the statement at the editor cursor; **Run All**
+executes statements in order and stops at the first error. Each result set is
+rendered as a table, and statement status reports affected rows and errors.
+
+The Students sample includes Departments, Courses and Enrollments with foreign
+keys, plus an Employees table. An Employees-only sample and a categorized query
+library are also available. Practice data is stored locally in browser storage
+and can be restored with **Reset Database**. No query or database contents are
+sent to a server.
+
+The query engine is real SQLite, not a MySQL server. A deliberately limited
+compatibility layer maps `CREATE DATABASE college;` and `USE college;` to
+separate in-browser SQLite connections, so the supplied college example runs
+without mixing its tables with the sample database. Database names must be
+simple unquoted identifiers. `INT` and `VARCHAR(n)` are accepted as SQLite type
+declarations, but retain SQLite's type-affinity semantics. Other SQL statements
+follow the browser's SQLite version; vendor-specific MySQL behavior is not
+emulated. Database contents are stored locally in browser storage and are never
+sent to a server.
 
 To point at your own Judge0 (recommended for a college deployment, and required
 for real Java 8 - see below) set this in the browser console once:
