@@ -1755,6 +1755,80 @@
     ].join("\n")
   };
 
+  /* The compiler screen reuses the existing Code Run engine/editor. These
+     routes select a real language in its saved workspace instead of mounting
+     parallel mock editors. */
+  const COMPILER_TABS = [
+    { slug: "code", label: "Code Run", language: "" },
+    { slug: "python", label: "Python", language: "python" },
+    { slug: "java", label: "Java", language: "java" },
+    { slug: "sql", label: "SQL", language: "sql" },
+    { slug: "javascript", label: "JavaScript", language: "javascript" },
+    { slug: "html", label: "HTML", language: "html" },
+    { slug: "css", label: "CSS", language: "css" },
+    { slug: "c", label: "C", language: "c" },
+    { slug: "cpp", label: "C++", language: "cpp" },
+    { slug: "php", label: "PHP", language: "php" },
+    { slug: "kotlin", label: "Kotlin", language: "kotlin" },
+    { slug: "go", label: "Go", language: "go" },
+    { slug: "rust", label: "Rust", language: "rust" },
+    { slug: "csharp", label: "C#", language: "csharp" },
+    { slug: "ruby", label: "Ruby", language: "ruby" },
+    { slug: "bash", label: "Bash", language: "bash" },
+    { slug: "swift", label: "Swift", language: "swift" },
+    { slug: "scala", label: "Scala", language: "scala" },
+    { slug: "perl", label: "Perl", language: "perl" },
+    { slug: "r", label: "R", language: "r" },
+    { slug: "elixir", label: "Elixir", language: "elixir" }
+  ];
+
+  function renderCompilerPage(activeSlug) {
+    const active = COMPILER_TABS.some(function (tab) { return tab.slug === activeSlug; }) ? activeSlug : "code";
+    return '<div class="page stack compiler-page">' +
+      crumb([{ label: "Home", href: "#/dashboard" }, { label: "Compiler" }]) +
+      '<header class="section-title-row compiler-heading">' +
+        '<div><p class="eyebrow">DIGITAL LABORATORY · EXECUTION WORKSPACE</p>' +
+        '<h1 class="preview-title"><span class="hl">Compiler</span></h1>' +
+        '<p class="sec-sub">Choose a language to open its existing editor and execution engine.</p></div>' +
+        '<span class="chip chip--accent">Browser + supported remote runtimes</span>' +
+      '</header>' +
+      '<nav class="compiler-tabs" role="tablist" aria-label="Compiler language">' +
+        COMPILER_TABS.map(function (tab) {
+          const selected = tab.slug === active;
+          return '<a class="compiler-tab' + (selected ? ' is-active' : '') + '" role="tab"' +
+            ' aria-selected="' + selected + '"' + (selected ? ' aria-current="page"' : '') +
+            ' href="#/compiler/' + tab.slug + '" data-link>' + esc(tab.label) + '</a>';
+        }).join("") +
+      '</nav>' +
+      '<div id="compilerHost" class="compiler-host" aria-live="polite"></div>' +
+    '</div>';
+  }
+
+  function activateCompilerTab(slug) {
+    $$(".compiler-tab").forEach(function (tab) {
+      const active = tab.getAttribute("href") === "#/compiler/" + slug;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", String(active));
+      if (active) tab.setAttribute("aria-current", "page");
+      else tab.removeAttribute("aria-current");
+    });
+  }
+
+  function mountCompilerPage(host, language) {
+    if (window.DSCodeLab && typeof window.DSCodeLab.mount === "function") {
+      window.DSCodeLab.mount(host, {
+        language: language || "",
+        compiler: true,
+        onLanguageChange: function (id) {
+          const tab = COMPILER_TABS.filter(function (item) { return item.language === id; })[0];
+          go("#/compiler/" + (tab ? tab.slug : "code"));
+        }
+      });
+      return;
+    }
+    host.innerHTML = '<div class="compiler-load-error" role="alert"><b>Compiler unavailable.</b> The existing Code Run module did not load, so no execution engine is available.</div>';
+  }
+
   function renderCodeLab() {
     const carry = pendingLabCode;
     const seed = carry && carry.code ? carry.code : LAB_SAMPLES.starter;
@@ -3289,6 +3363,25 @@
         pageTitle = "Student Profile - " + laboratory.name;
         break;
 
+      case "compiler": {
+        const slug = COMPILER_TABS.some(function (tab) { return tab.slug === route.id; }) ? route.id : "code";
+        const selected = COMPILER_TABS.filter(function (tab) { return tab.slug === slug; })[0];
+        const existingHost = document.getElementById("compilerHost");
+        if (existingHost) {
+          activateCompilerTab(slug);
+          const languageSelect = document.querySelector("#langSelect");
+          if (selected.language && languageSelect && languageSelect.value !== selected.language &&
+              window.DSCodeLab && typeof window.DSCodeLab.selectLanguage === "function") {
+            window.DSCodeLab.selectLanguage(selected.language);
+          }
+        } else {
+          view.innerHTML = renderCompilerPage(slug);
+          mountCompilerPage(document.getElementById("compilerHost"), selected.language);
+        }
+        pageTitle = "Compiler - " + laboratory.name;
+        break;
+      }
+
       case "codelab": {
         const carry = pendingLabCode;
         pageTitle = "Code Run - " + laboratory.name;
@@ -3379,14 +3472,24 @@
   }
 
   /* Highlights whichever top-bar link matches the current route. */
-  function applyPageTheme(route){var root=document.documentElement;var r=route||'';if(r.indexOf('codelab')!==-1){root.setAttribute('data-theme','code');}else if(r.indexOf('catalogue')!==-1||r.indexOf('experiment')!==-1){root.setAttribute('data-theme','experiments');}else if(r.indexOf('modules')!==-1||r.indexOf('tools')!==-1){root.setAttribute('data-theme','modules');}else if(r.indexOf('resources')!==-1){root.setAttribute('data-theme','resources');}else if(r.indexOf('projects')!==-1){root.setAttribute('data-theme','projects');}else if(r.indexOf('profile')!==-1||r.indexOf('student')!==-1){root.setAttribute('data-theme','profile');}else{root.setAttribute('data-theme','home');}}
+  function applyPageTheme(route) {
+    var root = document.documentElement;
+    var name = typeof route === "string" ? route : (route && route.name) || "";
+    if (name === "codelab" || name === "compiler") root.setAttribute("data-theme", "code");
+    else if (name === "catalogue" || name === "experiment" || name === "overview" || name === "section") root.setAttribute("data-theme", "experiments");
+    else if (name === "modules" || name === "tools") root.setAttribute("data-theme", "modules");
+    else if (name === "resources") root.setAttribute("data-theme", "resources");
+    else if (name === "projects") root.setAttribute("data-theme", "projects");
+    else if (name === "profile" || name === "student") root.setAttribute("data-theme", "profile");
+    else root.setAttribute("data-theme", "home");
+  }
 
 function paintNav() {
     const route = parseRoute();
     let active = "dashboard";
     if (route.name === "catalogue") active = "catalogue";
     else if (route.name === "student") active = "student";
-    else if (route.name === "codelab") active = "codelab";
+    else if (route.name === "codelab" || route.name === "compiler") active = "compiler";
     else if (route.name === "modules") active = "modules";
     else if (route.name === "tools") active = "tools";
     else if (route.name === "resources") active = "resources";

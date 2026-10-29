@@ -1726,10 +1726,10 @@ body.cm-open { overflow: hidden; }
   .parts { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); }
   .code-panel { max-height: 64vh; }
   .overview-cta { flex-direction: column; align-items: flex-start; gap: 14px; }
-  /* Six navigation items no longer fit on a single phone-width row. Lay them
+  /* Seven navigation items no longer fit on a single phone-width row. Lay them
      out as an even grid rather than letting the last one wrap onto a row of
      its own and stretch across the whole bar. */
-  .topnav { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+  .topnav { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
   .topnav__link {
     flex: initial;
     text-align: center;
@@ -1745,7 +1745,7 @@ body.cm-open { overflow: hidden; }
    The top bar stacks into three rows (brand, nav grid, tools) which came
    to 235px - over a quarter of a 844px phone screen - and stayed pinned there
    while scrolling, hiding the top of whatever you navigated to. On phones the
-   header now scrolls away with the page and the five links become a fixed
+   header now scrolls away with the page and the seven links become a fixed
    bottom tab bar, which is reachable with a thumb and never covers content
    once .view reserves space for it.
    -------------------------------------------------------------------------- */
@@ -1772,7 +1772,7 @@ body.cm-open { overflow: hidden; }
     z-index: 80;
     order: 0;
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 0;
     padding: 6px max(8px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     border: 1px solid var(--border);
@@ -1995,6 +1995,32 @@ body.cm-open { overflow: hidden; }
 /* ==========================================================================
    Code Lab (multi-language module, assets/js/codelab.js)
    ========================================================================== */
+
+.compiler-page { min-width: 0; }
+.compiler-heading { align-items: end; }
+.compiler-heading .sec-sub { margin: 5px 0 0; }
+.compiler-tabs {
+  display: flex; gap: 6px; max-width: 100%; overflow-x: auto;
+  padding: 7px; border: 1px solid var(--border); border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--bg-0));
+  scrollbar-width: thin; overscroll-behavior-x: contain;
+}
+.compiler-tab {
+  display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center;
+  min-height: 42px; padding: 8px 15px; border: 1px solid transparent;
+  border-radius: 10px; color: var(--text-muted); font-size: 13px; font-weight: 700;
+  text-decoration: none; white-space: nowrap;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.compiler-tab:hover { color: var(--text); border-color: var(--border-strong); background: var(--surface-2); }
+.compiler-tab.is-active {
+  color: var(--text); border-color: color-mix(in srgb, var(--accent) 50%, var(--accent-2));
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 15%, var(--surface)), color-mix(in srgb, var(--accent-2) 16%, var(--surface)));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.compiler-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.compiler-host { min-width: 0; }
+.compiler-load-error { padding: 18px; border: 1px solid var(--warn); border-radius: 12px; color: var(--text); background: var(--surface); }
 
 .lab2 {
   display: flex;
@@ -2349,6 +2375,11 @@ body.cm-open { overflow: hidden; }
 /* ---------- editor ---------- */
 
 .ed {
+  /* All editor layers (gutter, highlight, textarea) share these metrics. When
+     one layer used a different font-size or line-height the caret drifted away
+     from the visible text on phones. */
+  --ed-fs: 13px;
+  --ed-lh: 1.7;
   position: relative;
   display: flex;
   /* Taller than the output panel (max 460px) so the code side always reads as
@@ -2357,9 +2388,13 @@ body.cm-open { overflow: hidden; }
   background: var(--code-bg);
   color: var(--code-ink);
   font-family: var(--mono);
-  font-size: 0.86rem;
-  line-height: 1.62;
+  font-size: var(--ed-fs);
+  line-height: var(--ed-lh);
   overflow: hidden;
+}
+
+.ed:focus-within {
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .ed__gutter {
@@ -2372,6 +2407,9 @@ body.cm-open { overflow: hidden; }
   user-select: none;
   white-space: pre;
   overflow: hidden;
+  font-family: inherit;
+  font-size: var(--ed-fs);
+  line-height: var(--ed-lh);
   font-variant-numeric: tabular-nums;
 }
 
@@ -2390,9 +2428,9 @@ body.cm-open { overflow: hidden; }
   min-width: 0;
   height: 100%;
   overflow: hidden;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1.7;
+  font-family: var(--mono);
+  font-size: var(--ed-fs);
+  line-height: var(--ed-lh);
 }
 
 .ed__hl,
@@ -2401,9 +2439,9 @@ body.cm-open { overflow: hidden; }
   position: relative;
   margin: 0;
   padding: 12px 14px 12px 14px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1.7;
+  font-family: var(--mono);
+  font-size: var(--ed-fs);
+  line-height: var(--ed-lh);
   tab-size: 2;
   white-space: pre;
   word-break: normal;
@@ -2460,6 +2498,27 @@ body.cm-open { overflow: hidden; }
 .ed__ta::selection {
   background: rgba(56, 189, 248, 0.32);
   -webkit-text-fill-color: transparent;
+}
+
+/* Off-screen measuring layer for autocomplete placement. It must mirror the
+   textarea's box, font and wrapping exactly, but never paint or take up flow. */
+.ed__mirror {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 12px 14px 12px 14px;
+  font-family: var(--mono);
+  font-size: var(--ed-fs);
+  line-height: var(--ed-lh);
+  tab-size: 2;
+  letter-spacing: 0;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .ed--err {
@@ -3135,10 +3194,6 @@ body.lab2-fs-open {
     width: 100%;
   }
 
-  .ed {
-    font-size: 0.8rem;
-  }
-
   .lab2-panel--editor {
     height: clamp(360px, 58vh, 620px);
   }
@@ -3271,12 +3326,18 @@ body.lab2-fs-open {
   .lab2-console { max-height: 46vh; }
   .lab2-preview { height: 260px; }
 
-  /* --- iOS zooms any field under 16px when it gains focus --- */
+  /* --- iOS zooms any field under 16px when it gains focus ---
+     The code textarea is excluded from the blanket rule so the gutter,
+     highlight layer and textarea all stay on the same 16px/1.6 metrics. */
   input,
   select,
-  textarea,
-  .ed {
+  textarea:not(.ed__ta) {
     font-size: 16px !important;
+  }
+
+  .ed {
+    --ed-fs: 16px;
+    --ed-lh: 1.6;
   }
 
   /* --- keep the notch and home-indicator area clear --- */

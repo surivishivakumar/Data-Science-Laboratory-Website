@@ -707,7 +707,7 @@ function buildProgram() {
       '            if char == ";" and sqlite3.complete_statement(pending):',
       '                if pending.strip(): statements.append(pending.strip())',
       '                pending = ""',
-      '        if pending.strip() and pending.strip(" \\t\\r\\n;"):',
+      '        if pending.strip() and pending.strip(" \\\\t\\\\r\\\\n;"):',
       '            statements.append(pending.strip())',
       '        if not statements and _sql.strip(): statements = [_sql.strip()]',
       '        for statement in statements:',
@@ -764,12 +764,12 @@ function buildProgram() {
       '        elif _sqlOut["error"] and not _lab_sql_manual_txs.get(_lab_sql_selected, False): conn.rollback()',
       '    _sqlOut["selectedDatabase"] = _lab_sql_selected',
       '    _sqlOut["transactionOpen"] = any(_lab_sql_manual_txs.values())',
-      '    _sqlOut["dump"] = "\\n".join(conn.iterdump())',
-      '    _sqlOut["schema"] = [list(r) for r in conn.execute("SELECT name, type FROM sqlite_master WHERE type IN (\'table\',\'view\') AND name NOT LIKE \'sqlite_%\' ORDER BY type, name")]',
-      '    _sqlOut["databases"] = {name: "\\n".join(db.iterdump()) for name, db in _lab_sql_databases.items()}',
+      '    _sqlOut["dump"] = "\\\\n".join(conn.iterdump())',
+      '    _sqlOut["schema"] = [list(r) for r in conn.execute("SELECT name, type FROM sqlite_master WHERE type IN (\\'table\\',\\'view\\') AND name NOT LIKE \\'sqlite_%\\' ORDER BY type, name")]',
+      '    _sqlOut["databases"] = {name: "\\\\n".join(db.iterdump()) for name, db in _lab_sql_databases.items()}',
       'except BaseException as err:',
       '    _sqlOut["error"] = str(err)',
-      '    try: _sqlOut["databases"] = {name: "\\n".join(db.iterdump()) for name, db in _lab_sql_databases.items()}',
+      '    try: _sqlOut["databases"] = {name: "\\\\n".join(db.iterdump()) for name, db in _lab_sql_databases.items()}',
       '    except Exception: pass',
       '_sqlOut = json.dumps(_sqlOut, default=str)'
     ].join("\\n");
@@ -1329,6 +1329,7 @@ self.onmessage = async event => {
         return {
           ok: result.ok !== false, stdout: "", stderr: result.error || "", plots: [], html: [],
           tables: result.tables || [], statements: result.statements || [],
+          failedStatement: result.failedStatement || "",
           dump: result.dump || "", databases: result.databases || {}, schema: result.schema || [],
           message: result.message || "", transactionOpen: !!result.transactionOpen,
           selectedDatabase: result.selectedDatabase || options.databaseKey || "students",
@@ -2506,6 +2507,46 @@ self.onmessage = async event => {
       var hit = findNode(store.root, state.fileId);
       return hit ? hit.node : null;
     }
+    function defaultLanguageFile(id) {
+      var language = L[id];
+      if (!language) return null;
+      var exact = null, fallback = null;
+      (store.root.children || []).forEach(function (folder) {
+        if (folder.type !== "folder") return;
+        (folder.children || []).forEach(function (file) {
+          if (file.type !== "file" || file.lang !== id) return;
+          if (!fallback) fallback = file;
+          if (folder.name === language.label) exact = file;
+        });
+      });
+      return exact || fallback;
+    }
+    /* Older saved workspaces may predate a language folder. The compiler's
+       language tabs must open a file for that language instead of relabelling
+       whichever file happens to be active. */
+    function ensureLanguageFile(id) {
+      var existing = defaultLanguageFile(id);
+      if (existing) return existing;
+      var language = L[id];
+      if (!language) return null;
+      var folder = (store.root.children || []).filter(function (child) {
+        return child.type === "folder" && child.name === language.label;
+      })[0];
+      if (!folder) {
+        folder = { id: uid(), type: "folder", name: language.label, open: false, children: [] };
+        store.root.children.push(folder);
+      }
+      folder.children = folder.children || [];
+      var stamp = Date.now();
+      var file = {
+        id: uid(), type: "file", name: "hello." + language.ext, lang: id,
+        code: SAMPLES[id] || "", savedCode: SAMPLES[id] || "",
+        created: stamp, modified: stamp, versions: []
+      };
+      folder.children.push(file);
+      persist();
+      return file;
+    }
     function currentCode() {
       if (state.mode === "notebook" && state.notebook) {
         return state.notebook.cells.map(function (c) { return c.code; }).join("\n\n");
@@ -2859,12 +2900,55 @@ self.onmessage = async event => {
       }).join("");
     }
 
+    /* Turn the most common SQLite failures into an actionable next step while
+       keeping the engine's real error text and failed statement visible. */
+    function sqlFailureHint(r) {
+      var message = String(r.stderr || "");
+      if (!message) return "";
+      if (/already exists/i.test(message)) {
+        return "That table or object already exists in this saved database. Choose a different name, " +
+          "or use Reset database to restore the sample schema. Existing data has not been changed.";
+      }
+      if (/no such table/i.test(message)) {
+        return "That table is not in the selected database. Create it first or restore the sample database.";
+      }
+      if (/no such column/i.test(message)) {
+        return "A column in the statement does not exist. Check the CREATE TABLE statement or run " +
+          "PRAGMA table_info(table_name).";
+      }
+      if (/UNIQUE constraint failed/i.test(message)) {
+        return "A UNIQUE constraint rejected the row. Use a new key, or INSERT OR REPLACE where appropriate.";
+      }
+      if (/NOT NULL constraint failed/i.test(message)) {
+        return "A required column was left NULL. Provide a value for every NOT NULL column.";
+      }
+      if (/CHECK constraint failed/i.test(message)) {
+        return "A CHECK constraint rejected the value. Adjust it to match the table's allowed range.";
+      }
+      if (/FOREIGN KEY constraint failed/i.test(message)) {
+        return "The row references a key that does not exist. Insert the parent row first.";
+      }
+      if (/syntax error/i.test(message)) {
+        return "SQLite rejected the statement syntax. The exact error above is from the engine; " +
+          "check the statement and run it again.";
+      }
+      return "";
+    }
+
     function showResult(r) {
       var html = "";
       var ok = r.ok !== false;
 
       if (r.compile && r.compileFailed) html += consoleBlock("Compilation error", r.compile, "err");
-      if (r.stderr && r.stderr.trim()) html += consoleBlock("Error", r.stderr.replace(/\s+$/, ""), "err");
+      if (r.stderr && r.stderr.trim()) {
+        var errorBody = r.stderr.replace(/\s+$/, "");
+        var hint = state.langId === "sql" ? sqlFailureHint(r) : "";
+        if (hint) errorBody += "\n\n" + hint;
+        if (state.langId === "sql" && r.failedStatement) {
+          errorBody += "\n\nFailed statement: " + r.failedStatement;
+        }
+        html += consoleBlock("Error", errorBody, "err");
+      }
       if (r.stdout && r.stdout.trim()) html += consoleBlock("Output", r.stdout.replace(/\s+$/, ""), "out");
       if (r.value) html += consoleBlock("Result", r.value, "out");
       if (r.message) html += consoleBlock("Database", r.message, "out");
@@ -3603,6 +3687,15 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
 
     els.langSelect.addEventListener("change", function () {
       var id = els.langSelect.value;
+      if (opts && opts.compiler) {
+        var languageFile = ensureLanguageFile(id);
+        if (languageFile) {
+          flushAutosave();
+          openFile(languageFile.id);
+          if (typeof opts.onLanguageChange === "function") opts.onLanguageChange(id);
+          return;
+        }
+      }
       var current = activeFile();
       if (id === "sql" && current && current.lang !== "sql") {
         var sqlFolder = (store.root.children || []).filter(function (folder) {
@@ -3724,16 +3817,9 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
 
     /* Deep links from Resources can open a particular language directly. */
     var requestedLanguage = opts && L[opts.language] ? opts.language : "";
-    var requestedFile = null;
-    if (!carriedOk && requestedLanguage) {
-      (function findLanguageFile(node) {
-        if (requestedFile) return;
-        (node.children || []).forEach(function (child) {
-          if (child.type === "file" && child.lang === requestedLanguage) requestedFile = child;
-          else if (child.type === "folder") findLanguageFile(child);
-        });
-      })(store.root);
-    }
+    var requestedFile = !carriedOk && requestedLanguage
+      ? (opts && opts.compiler ? ensureLanguageFile(requestedLanguage) : defaultLanguageFile(requestedLanguage))
+      : null;
 
     /* restore a requested language, the last open file, else Python starter */
     if (!carriedOk && requestedFile) {
@@ -3779,6 +3865,15 @@ if (!html && !hasRich) html = '<div class="lab2-console__idle">Program executed 
 
   global.DSCodeLab = {
     mount: mount,
+    selectLanguage: function (id) {
+      if (!L[id]) return false;
+      var select = document.querySelector("#langSelect");
+      if (!select) return false;
+      if (select.value === id) return true;
+      select.value = id;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      return true;
+    },
     languages: ORDER.map(function (id) {
       return { id: L[id].id, label: L[id].label, ext: L[id].ext,
                version: L[id].version, engine: L[id].engine };

@@ -166,19 +166,27 @@ Individual Section     header: "Experiment 1" + part letter
 Back navigation works via the breadcrumb at the top of every page and the
 prev/next buttons at the bottom.
 
-The top bar links to **Home**, **Experiments**, **Code Run**, **Modules** and
-**Tools**. Home and Experiments simply jump to the matching part of page 1, so
-the four-step flow above is never duplicated; Code Run, Modules and Tools are
-their own pages (`#/codelab`, `#/modules`, `#/tools`).
+The top bar links to **Home**, **Experiments**, **Modules**, **Compiler**,
+**Resources**, **Projects** and **Tools**. Compiler (`#/compiler`) is the
+organized entry to the existing Code Run editor. Its tabs cover Code Run,
+Python, Java, SQL, JavaScript, HTML, CSS, C, C++, PHP, Kotlin, Go, Rust, C#,
+Ruby, Bash, Swift, Scala, Perl, R and Elixir, with direct routes such as
+`#/compiler/python`, `#/compiler/sql` and `#/compiler/cpp`. The original
+`#/codelab` route remains available to existing links and practicals.
 
 ---
 
 ## 3b. Code Run - many languages, nothing to install
 
-**Code Run** (`#/codelab`) is a full editor plus runner. It lives in its own file,
-`assets/js/codelab.js`, plus a small companion, `assets/js/codelab-py.js`, that
-supplies the few Python packages Pyodide is missing (see below). The lab exposes
-one function:
+The main-navigation **Compiler** page (`#/compiler`) organizes the existing
+editor into a tab for every supported language: Code Run, Python, Java, SQL,
+JavaScript, HTML, CSS, C, C++, PHP, Kotlin, Go, Rust, C#, Ruby, Bash, Swift,
+Scala, Perl, R and Elixir. Direct language routes such as `#/compiler/sql` load
+that language in the same workspace. The original **Code Run** route
+(`#/codelab`) remains available for existing links. The editor and runner live
+in `assets/js/codelab.js`, plus a small companion, `assets/js/codelab-py.js`,
+that supplies the few Python packages Pyodide is missing (see below). The lab
+exposes one function:
 
 ```js
 window.DSCodeLab.mount(hostElement, { code, name })
@@ -211,6 +219,8 @@ executes genuine SQLite statements in a dedicated WebAssembly worker. **Run Quer
 executes the selected text, or the statement at the editor cursor; **Run All**
 executes statements in order and stops at the first error. Each result set is
 rendered as a table, and statement status reports affected rows and errors.
+A failed run shows SQLite's actual message, a plain-language hint and the
+statement that failed.
 
 The Students sample includes Departments, Courses and Enrollments with foreign
 keys, plus an Employees table. An Employees-only sample and a categorized query
